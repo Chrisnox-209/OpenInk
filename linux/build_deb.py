@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 
-VERSION='1.5.0'
+VERSION='1.6.0'
 
 
 def write(root,path,text,mode=0o644):
@@ -33,6 +33,8 @@ def main():
 Type=Application
 Name=OpenInk
 Comment=Diagnostic Epson et suivi indicatif de l'encre
+Comment[en]=Epson diagnostics and estimated ink monitoring
+Comment[es]=Diagnóstico Epson y seguimiento estimado de tinta
 Exec=openink
 Icon=openink
 Terminal=false
@@ -43,12 +45,18 @@ Actions=StopMonitoring;
 
 [Desktop Action StopMonitoring]
 Name=Arrêter la surveillance
+Name[en]=Stop monitoring
+Name[es]=Detener el seguimiento
 Exec=openink --stop-agent
 """)
         write(root,'etc/xdg/autostart/openink-agent.desktop',"""[Desktop Entry]
 Type=Application
 Name=OpenInk - icône et surveillance
+Name[en]=OpenInk - tray and monitoring
+Name[es]=OpenInk - icono y seguimiento
 Comment=Démarrer dans le panneau, sans fenêtre, avec suivi des impressions
+Comment[en]=Start in the panel without a window and monitor printing
+Comment[es]=Iniciar en el panel sin ventana y seguir las impresiones
 Exec=openink --background
 Icon=openink
 Terminal=false
@@ -64,7 +72,7 @@ X-GNOME-Autostart-enabled=true
         write(root,'usr/lib/udev/rules.d/70-openink-epson.rules',
               '# Access for the active local user, normal XP-2200 only.\nSUBSYSTEM=="usb", ATTR{idVendor}=="04b8", ATTR{idProduct}=="11b1", TAG+="uaccess"\n')
         docs=root/'usr/share/doc/openink';docs.mkdir(parents=True,exist_ok=True)
-        for source in [app/'README.md',app/'THIRD_PARTY_NOTICES.md',app/'CONTRIBUTING.md',*sorted(p for p in (app/'docs').rglob('*') if p.is_file())]:
+        for source in [*sorted(app.glob('README*.md')),app/'THIRD_PARTY_NOTICES.md',app/'CONTRIBUTING.md',*sorted(p for p in (app/'docs').rglob('*') if p.is_file())]:
             if source.exists():
                 destination=docs/source.relative_to(app)
                 destination.parent.mkdir(parents=True,exist_ok=True)

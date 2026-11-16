@@ -29,7 +29,7 @@ def cartridge_diagnostics(snapshot):
 def fault_alerts(snapshot):
     return [{"color":c, "state":d["state"], "key":f"{d['state']}:{d.get('raw_code')}",
              "title":f"{NAMES[c]} · {d['label']}",
-             "detail":"Ouvrir Inkora pour consulter le diagnostic. Un reset matériel n’est pas validé pour ce firmware."}
+             "detail":"Ouvrir OpenInk pour consulter le diagnostic. Un reset matériel n’est pas validé pour ce firmware."}
             for c,d in cartridge_diagnostics(snapshot).items() if d["state"] in {"empty","missing","error","defective"}]
 
 

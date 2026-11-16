@@ -24,16 +24,34 @@ python3 linux/build_linux.py
 git diff --check
 ```
 
-Pour les modifications d’interface, utiliser le contrôle en démo :
+Pour les modifications d’interface, utiliser les contrôles graphiques isolés :
 
 ```bash
 python3 linux/tests/check_interface.py
+python3 linux/tests/check_i18n.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 ```
 
 Les tests matériels ne doivent pas s’exécuter implicitement dans une suite de
-tests. Les captures et fichiers construits restent ignorés par Git. Les tests
-d’imprimante et les fixtures doivent utiliser une identité fictive.
+tests. Les contrôles utilisent une base temporaire et une identité fictive.
+Les captures de validation et fichiers construits restent ignorés par Git.
+Seules les illustrations publiques de `docs/images/` sont versionnées.
+
+Les catalogues `commun/inkora/locales/en.json` et `es.json` traduisent les
+libellés français à l’affichage. Conserver les paramètres `{p0}`, `{p1}`, etc.
+et les valeurs canoniques des formulaires : ne jamais traduire les identifiants
+CUPS, les commandes matérielles ou les données persistantes. Le README par
+défaut reste français ; maintenir les guides anglais et espagnol à jour.
+
+Pour renouveler les illustrations des trois guides, sans accès matériel :
+
+```bash
+python3 linux/tests/capture_readme.py
+```
+
+La capture nécessite un affichage X11/XWayland et `xwd` (`x11-apps`). Elle lit
+uniquement la fenêtre de test, pas le bureau. Vérifier visuellement les neuf
+images produites avant de les publier.
 
 ## Style des commits
 

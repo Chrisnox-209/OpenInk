@@ -4,19 +4,37 @@
 
 <h1 align="center">OpenInk · Linux</h1>
 
+<p align="center"><strong>Français</strong> · <a href="README.en.md">English</a> · <a href="README.es.md">Español</a></p>
+
 <p align="center">Suivi indicatif de l’encre et notifications Ubuntu pour Epson XP-2200.</p>
 
 <p align="center">
-  <img alt="Version 1.5.0" src="https://img.shields.io/badge/version-1.5.0-795CF5">
+  <img alt="Version 1.6.0" src="https://img.shields.io/badge/version-1.6.0-795CF5">
   <img alt="Plateforme Ubuntu amd64" src="https://img.shields.io/badge/plateforme-Ubuntu_amd64-E95420">
   <img alt="Python 3.10 ou supérieur" src="https://img.shields.io/badge/Python-%E2%89%A5_3.10-3776AB">
   <img alt="Interface Tkinter" src="https://img.shields.io/badge/interface-Tkinter-00B7E8">
 </p>
 
-OpenInk est une application de bureau avec un agent de
-session. Elle présente l’état de l’imprimante, les compteurs de pages, un suivi
-local par couleur et des alertes de réserve. Un assistant séparé permet
-l’installation explicite d’**OpenFlow**, par **USB uniquement**.
+**OpenInk permet d’installer OpenFlow sur une Epson XP-2200, puis de suivre
+l’encre restante avec des estimations et des notifications Ubuntu.**
+
+Le firmware d’origine peut refuser une cartouche compatible et bloquer
+l’impression. Le **flash d’OpenFlow par USB** modifie ce comportement global :
+sur la XP-2200 IU05P2 testée, il a permis d’imprimer avec des cartouches
+compatibles auparavant rejetées ou signalées comme non reconnues.
+Il ne réécrit pas leurs puces et ne rend pas utilisable n’importe quelle
+référence de cartouche : les cartouches sans puce et tous les modèles tiers
+ne sont pas validés.
+
+Une fois OpenFlow installé, les valeurs Epson à 100 % sont simulées. OpenInk
+maintient donc un **suivi indépendant par couleur**, fondé sur les compteurs
+de pages et le niveau de départ déclaré. Il avertit avant la réserve pour
+anticiper le remplissage, sans pouvoir mesurer physiquement l’encre ni
+garantir l’absence de désamorçage. Un nouveau flash à chaque cartouche est inutile.
+
+![Vue d’ensemble d’OpenInk en français](docs/images/openink-fr-overview.png)
+
+*Captures de l’interface française avec des valeurs d’exemple, sans données personnelles.*
 
 Ce dépôt contient la version **Linux uniquement** : sources, tests, ressources
 graphiques et scripts de construction. Il ne contient ni données utilisateur,
@@ -41,7 +59,7 @@ conservée avec ses fichiers et sa licence d’origine.
 | Page de test | PDF A4 avec logo OpenInk, aplats CMJN, intensités, textes et traits fins |
 | Firmware OpenFlow | Assistant USB, sauvegarde préalable, intégrité vérifiée, acceptation explicite |
 | Interface | Logo vectoriel, pourcentages, fenêtre adaptée au moniteur choisi |
-| Démo | Aperçu en mémoire, sans imprimante, impression ou flash |
+| Langues | Français, anglais et espagnol ; choix dans Réglages et détection du système |
 
 ## Prérequis
 
@@ -64,16 +82,15 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ### Télécharger le paquet prêt à installer
 
-La [version v1.5.0](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.5.0)
+La [version v1.6.0](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.6.0)
 propose le paquet Ubuntu **amd64**, l’archive des sources et `SHA256SUMS`.
-Une connexion GitHub autorisée est nécessaire puisque le dépôt est privé.
 
-Télécharger `openink_1.5.0_amd64.deb` et `SHA256SUMS` dans le même dossier,
+Télécharger `openink_1.6.0_amd64.deb` et `SHA256SUMS` dans le même dossier,
 fermer l’ancienne application, puis ouvrir un terminal dans ce dossier :
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./openink_1.5.0_amd64.deb
+sudo apt install ./openink_1.6.0_amd64.deb
 openink
 ```
 
@@ -84,16 +101,15 @@ Le téléchargement et l’installation du logiciel ne lancent aucun flash.
 ### Construire et installer le paquet Ubuntu
 
 ```bash
-git clone git@github.com:Chrisnox-209/OpenInk.git
+git clone https://github.com/Chrisnox-209/OpenInk.git
 cd OpenInk
 sudo apt install dpkg-dev desktop-file-utils
 python3 linux/build_deb.py
-sudo apt install ./linux/dist/openink_1.5.0_amd64.deb
+sudo apt install ./linux/dist/openink_1.6.0_amd64.deb
 openink
 ```
 
-Le dépôt étant privé, le clone nécessite un accès GitHub autorisé. Les paquets
-générés restent dans `linux/dist/`, hors de Git. L’empreinte SHA-256 du `.deb`
+Les paquets générés restent dans `linux/dist/`, hors de Git. L’empreinte SHA-256 du `.deb`
 est écrite à côté du fichier.
 
 L’installation ajoute le lanceur **OpenInk**, les notifications de session,
@@ -123,7 +139,6 @@ continue et la commande `openink` ouvre toujours la fenêtre.
 Depuis la racine du dépôt :
 
 ```bash
-./linux/Lancer-OpenInk.sh --demo
 ./linux/Lancer-OpenInk.sh
 ```
 
@@ -142,11 +157,28 @@ vers ce clone ; il n’installe ni dépendances ni règle USB.
 ### Commandes utiles après installation
 
 ```bash
-openink --demo          # Démo isolée en mémoire
 openink --background    # Surveillance sans fenêtre, selon le réglage d’autostart
 openink --stop-agent    # Arrêter la surveillance
 openink --help          # Toutes les options
 ```
+
+## Langues de l’application
+
+Le français reste la version principale de ce README. Les guides
+[anglais](README.en.md) et [espagnol](README.es.md) décrivent les mêmes fonctions.
+
+Dans **Réglages > Langue de l’interface**, choisir **Français**, **English**,
+**Español** ou **Automatique**. Le choix est enregistré et l’interface se met
+à jour immédiatement. Le menu du panneau et les notifications suivent cette
+préférence ; les historiques et les compteurs restent conservés.
+
+```bash
+openink --lang fr
+openink --lang en
+openink --lang es
+```
+
+![Réglages et choix de langue](docs/images/openink-fr-settings.png)
 
 ## Premier lancement et suivi de l’encre
 
@@ -186,6 +218,8 @@ Après installation de V2, ajuster le suivi après chaque remplissage suffit :
 
 ## Assistant OpenFlow et risques
 
+![OpenFlow et avertissement de flash en français](docs/images/openink-fr-openflow.png)
+
 Avant toute écriture, l’assistant impose une confirmation générale, une case
 d’acceptation des risques et une confirmation USB, toutes explicites. Il
 contrôle le modèle, l’identité, l’image, la version, la disponibilité et les
@@ -220,7 +254,7 @@ recto seul, est envoyée après clic explicite.
 Le dialogue distingue les files désactivées, privilégie une file disponible
 et demande une confirmation quand son identité ne peut pas être établie.
 L’état est relu au clic pour éviter de dépendre d’une observation ancienne.
-L’envoi reste refusé en démo, pendant une opération firmware, si l’imprimante
+L’envoi reste refusé pendant une opération firmware, si l’imprimante
 n’est pas prête ou si la file est occupée. Aucun travail existant n’est
 supprimé. Une acceptation par CUPS ne prouve pas encore une sortie papier.
 Le PDF se trouve dans [les ressources](commun/inkora/assets/test-page.pdf) ;
@@ -228,7 +262,7 @@ ce contrôle visuel ne remplace pas le test des buses Epson.
 
 ## Données, confidentialité et désinstallation
 
-Les chemins historiques restent conservés pour la migration depuis Inkora :
+Les données restent sur cet ordinateur :
 
 | Donnée | Chemin par défaut |
 | --- | --- |
@@ -254,10 +288,11 @@ firmware de l’imprimante. Garder les sauvegardes firmware en lieu sûr.
 ```text
 commun/inkora/             Application, agent, base, UI et accès matériels
   assets/                 Logo SVG, icônes PNG et page de test PDF
+  locales/                Catalogues anglais et espagnol
   firmware_assets/        OpenFlow : image V2 inchangée et manifeste épinglé
   _vendor/                Bibliothèque USB, provenance et licence MIT
 linux/                    Lanceurs et scripts de construction Ubuntu
-  tests/                  Tests hors ligne et contrôle graphique en démo
+  tests/                  Tests et contrôles graphiques isolés
 docs/                     Installation technique, V2 et bilan de validation
 CONTRIBUTING.md           Vérifications et conventions de commit
 THIRD_PARTY_NOTICES.md    Origine et licences des composants embarqués
@@ -270,8 +305,9 @@ THIRD_PARTY_NOTICES.md    Origine et licences des composants embarqués
 PYTHONDONTWRITEBYTECODE=1 PYTHONWARNINGS=error::ResourceWarning \
   python3 -m unittest discover -s linux/tests -v
 
-# Contrôle graphique séparé, uniquement en démo ; nécessite un affichage
+# Contrôles graphiques isolés ; nécessitent un affichage
 python3 linux/tests/check_interface.py
+python3 linux/tests/check_i18n.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 
 # Construction sans installation ni accès matériel
@@ -279,7 +315,7 @@ python3 linux/build_deb.py
 python3 linux/build_linux.py
 ```
 
-Les **101 tests** couvrent le suivi, les réserves, les migrations, les notifications,
+Les tests hors ligne couvrent le suivi, les réserves, les migrations, les notifications,
 les dialogues, les soumissions CUPS simulées et les limites du contrôleur firmware.
 Ils ne remplacent pas une validation physique sur chaque appareil.
 
@@ -292,7 +328,7 @@ python3 linux/build_brand_assets.py
 
 L’image OpenFlow (V2) est fournie et contrôlée à l’import/construction ; ce dépôt ne contient
 pas les outils de recherche historiques nécessaires à sa reconstruction.
-Voir [la validation et les limites](docs/OPENINK_1.5.md),
+Voir [la validation et les limites](docs/OPENINK_1.6.md),
 [l’architecture](docs/ARCHITECTURE.md) et les
 [conventions de contribution](CONTRIBUTING.md).
 

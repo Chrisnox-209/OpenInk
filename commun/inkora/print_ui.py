@@ -3,9 +3,9 @@ import subprocess
 import queue
 import threading
 import sqlite3
-import tkinter as tk
-from tkinter import ttk
+from .widgets import tk,ttk
 
+from .i18n import tr,test_page
 from .branding import TEST_PAGE
 from .dialogs import focus_existing,register_dialog,scrollable_content
 from .printing import cups_printers,submit_test_page
@@ -24,14 +24,14 @@ def show(app):
     tk.Label(frame,text='Logo OpenInk, dégradés CMJN, niveaux de gris et traits fins. Une seule page A4 en couleur.',bg='white',fg='#66748A',wraplength=round(610*scale),justify='left',font=app.font(10,scaled=True)).pack(anchor='w',pady=(0,14))
     note=tk.StringVar(value='Mode démonstration : aucune impression ne sera envoyée.'if app.demo else'Recherche des files CUPS…')
     selection=tk.StringVar(value='')
-    combo=ttk.Combobox(frame,textvariable=selection,values=(),state='readonly');combo.pack(fill='x',pady=7)
+    combo=ttk.Combobox(frame,textvariable=selection,values=(),state='readonly',localize_values=False);combo.pack(fill='x',pady=7)
     confirmed=tk.BooleanVar(value=False)
     confirmation=ttk.Checkbutton(frame,text='Je confirme que cette file correspond à mon Epson XP-2200.',variable=confirmed)
     confirmation.pack(anchor='w',pady=8)
     tk.Label(buttons,textvariable=note,bg='white',fg='#A16E19',font=app.font(10,scaled=True),wraplength=round(610*scale),justify='left').pack(side='top',anchor='w',pady=8)
     row=tk.Frame(buttons,bg='white');row.pack(side='bottom',fill='x');buttons=row
     available={};sending=False
-    def preview():subprocess.Popen(['xdg-open',str(TEST_PAGE)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    def preview():subprocess.Popen(['xdg-open',str(test_page())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     def dismiss():win.destroy()
     def background(action,finish):
         results=queue.Queue()
@@ -61,7 +61,7 @@ def show(app):
         elif not selected:note.set('Choisis la file CUPS de ton Epson.')
         elif not selected['enabled']:note.set('Cette file est désactivée dans CUPS. Choisis une autre file disponible.')
         elif not selected['confirmed']and not confirmed.get():note.set('Vérifie la file choisie, puis coche sa confirmation pour activer l’impression.')
-        else:note.set('Prêt : une seule page A4 sera envoyée à '+selection.get()+'.')
+        else:note.set(tr('Prêt : une seule page A4 sera envoyée à {p0}.').format(p0=selection.get()))
     def delivered(result,error):
         nonlocal sending
         if error:

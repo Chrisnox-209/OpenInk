@@ -4,6 +4,7 @@ from pathlib import Path
 import math
 import shutil
 import subprocess
+import sys
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import PCMYKColor as CMYKColor,HexColor,white
 from reportlab.lib.pagesizes import A4
@@ -12,6 +13,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'commun'))
+from inkora.i18n import tr,set_language
 ASSETS=ROOT/'commun/inkora/assets'
 OUTPUT=ROOT/'output/pdf/OpenInk-Page-de-test.pdf'
 TMP=ROOT/'tmp/pdfs/openink'
@@ -49,7 +52,15 @@ def draw_logo(c,x,y,height):
     c.restoreState()
 
 
-def main():
+class LocalizedCanvas(canvas.Canvas):
+    def drawString(self,x,y,text,*args,**kw):return super().drawString(x,y,tr(text),*args,**kw)
+    def drawCentredString(self,x,y,text,*args,**kw):return super().drawCentredString(x,y,tr(text),*args,**kw)
+    def drawRightString(self,x,y,text,*args,**kw):return super().drawRightString(x,y,tr(text),*args,**kw)
+
+
+def main(language='fr'):
+    set_language(language)
+    output=OUTPUT if language=='fr'else OUTPUT.with_name(f'OpenInk-Test-Page-{language}.pdf')
     ASSETS.mkdir(parents=True,exist_ok=True);TMP.mkdir(parents=True,exist_ok=True);OUTPUT.parent.mkdir(parents=True,exist_ok=True)
     paths=''.join(f'<path fill="{color}" d="{svg_path(commands)}"'+(' stroke="white" stroke-width="8" stroke-linejoin="round"'if i else'')+'/>'for i,(color,_,commands)in enumerate(LAYERS))
     svg=f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 320"><defs><clipPath id="drop"><path d="{svg_path(OUTLINE)}"/></clipPath></defs><g clip-path="url(#drop)">{paths}</g></svg>\n'
@@ -63,15 +74,15 @@ def main():
         icon.alpha_composite(mark,((size-mark.width)//2,(size-mark.height)//2));icon.save(ASSETS/f'openink-{size}.png')
     for name,file in [('OpenInk','Lato-Regular.ttf'),('OpenInkBold','Lato-Bold.ttf')]:
         pdfmetrics.registerFont(TTFont(name,'/usr/share/fonts/truetype/lato/'+file))
-    c=canvas.Canvas(str(OUTPUT),pagesize=A4);width,height=A4
-    c.setTitle('OpenInk - Page de test CMJN');c.setAuthor('OpenInk')
+    c=LocalizedCanvas(str(output),pagesize=A4);width,height=A4
+    c.setTitle(tr('OpenInk - Page de test CMJN'));c.setAuthor('OpenInk')
     draw_logo(c,42,747,59)
     c.setFillColor(HexColor('#20283D'));c.setFont('OpenInkBold',33);c.drawString(103,773,'OpenInk')
     c.setFont('OpenInk',12);c.setFillColor(HexColor('#66748A'));c.drawString(105,752,'Page de test couleur - Epson XP-2200')
     c.setStrokeColor(HexColor('#DBE3ED'));c.line(44,727,width-44,727)
     c.setFont('OpenInkBold',16);c.setFillColor(HexColor('#20283D'));c.drawString(44,699,'Quatre couleurs, onze intensités')
     c.setFont('OpenInk',9);c.setFillColor(HexColor('#66748A'));c.drawString(44,681,'Compare les aplats, les dégradés et la finesse des traits. Une seule page A4.')
-    for row,(letter,name,channel)in enumerate([('C','Cyan',0),('M','Magenta',1),('J','Jaune',2),('N','Noir',3)]):
+    for row,(letter,name,channel)in enumerate([('C','Cyan',0),('M','Magenta',1),('J'if language=='fr'else'Y','Jaune',2),('N'if language=='fr'else'K','Noir',3)]):
         y=625-row*76
         components=[0,0,0,0];components[channel]=100
         c.setFillColor(CMYKColor(*components));c.circle(66,y,17,stroke=0,fill=1)
@@ -109,8 +120,9 @@ def main():
     c.drawString(44,86,'Contrôle visuel CMJN ; ne remplace pas le test des buses Epson.')
     c.setFont('OpenInkBold',9);c.drawString(44,48,'OpenInk');c.setFont('OpenInk',8);c.drawRightString(width-44,48,'Test couleur - A4 - 1 page')
     c.showPage();c.save()
-    shutil.copy2(OUTPUT,ASSETS/'test-page.pdf')
-    print(OUTPUT)
+    shutil.copy2(output,ASSETS/('test-page.pdf'if language=='fr'else f'test-page.{language}.pdf'))
+    print(output)
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    for language in('fr','en','es'):main(language)

@@ -13,7 +13,8 @@ def main():
     def quoted(value):
         return '"'+str(value).replace('\\','\\\\').replace('"','\\"').replace('%','%%').replace('`','\\`').replace('$','\\$')+'"'
     entry=applications/"openink.desktop"
-    entry.write_text("[Desktop Entry]\nType=Application\nName=OpenInk\nComment=Suivi des cartouches Epson\nExec="+quoted(launcher)+
+    entry.write_text("[Desktop Entry]\nType=Application\nName=OpenInk\nComment=Suivi des cartouches Epson\n"
+        "Comment[en]=Epson cartridge monitoring\nComment[es]=Seguimiento de cartuchos Epson\nExec="+quoted(launcher)+
         "\nIcon="+str(folder/"openink.svg")+"\nTerminal=false\nCategories=Utility;\nStartupNotify=true\n",encoding="utf-8")
     print("Raccourci installé :",entry)
 

@@ -1,13 +1,13 @@
 """V2 installation and physical ink declarations. Demo never starts a worker."""
 import json
 import subprocess
-import tkinter as tk
-from tkinter import ttk
+from .widgets import tk,ttk
 
 from .firmware import (SAFE_PHASES,current_operation,hardware_busy,job_folder,launch_job,prepare_job,
                        remaining_wait)
 from .printer import COLORS,NAMES
 from .dialogs import focus_existing,register_dialog,scrollable_content
+from .i18n import tr
 from .branding import RISK_NOTICE
 
 BG='#FFFFFF';INK='#20283D';MUTED='#818A9E';PURPLE='#7560E8';LINE='#E8ECF3'
@@ -41,7 +41,7 @@ def page(app):
                'waiting':'Attente après programmation','verifying':'Vérification d’OpenFlow','backup':'Sauvegarde avant transfert',
                'upload':'Transfert du firmware','commit_requested':'Programmation demandée'}.get(state['phase'],'Opération OpenFlow')
         app.text(270,562,label,12,PURPLE,'bold')
-        detail=state.get('detail','')
+        detail=tr(state.get('detail',''))
         app.text(270,590,detail[:235]+('…'if len(detail)>235 else''),10,MUTED,width=880)
         value=state.get('progress')
         progress=max(0,min(1,float(value)))if value is not None else 0

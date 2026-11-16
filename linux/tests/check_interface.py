@@ -218,7 +218,7 @@ def main():
             result['demo_test_print_button_disabled_without_cups_io']=True
             result['no_left_margin']=True
             result['print_dialog_selects_enabled_queue_and_submits_once']=True
-            (output/"VALIDATION_INTERFACE_OPENINK_1.5.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n")
+            (output/f"VALIDATION_INTERFACE_OPENINK_{__version__}.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n")
             print(json.dumps(result, ensure_ascii=False, indent=2))
     finally:
         if app:

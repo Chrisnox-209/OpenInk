@@ -16,6 +16,7 @@ from .store import Store
 from .usb import read_connected
 from .notifications import DesktopNotifications
 from . import __version__
+from .i18n import set_language
 
 
 class PrivateRotatingLog(RotatingFileHandler):
@@ -81,6 +82,7 @@ class Agent:
                 failures=0;cycles=0;next_read=0
                 while not self.stop.is_set():
                     if not Path(__file__).is_file():break  # Uninstalled package: stop without root intervention.
+                    set_language(store.setting('language','auto'))
                     try:self.notifier.poll()
                     except ConnectionError:
                         logger.info('Fin de la session graphique, arrêt de la surveillance.')

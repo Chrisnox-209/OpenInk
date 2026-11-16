@@ -4,6 +4,9 @@
 
 - `ui.py`, `dialogs.py`, `branding.py` : fenêtre Tkinter, mise à l’échelle,
   jauges et identité graphique.
+- `i18n.py`, `locales/`, `widgets.py` : préférence de langue, catalogues anglais
+  et espagnol, présentation traduite sans modifier les valeurs internes des
+  formulaires ou des données. Les processus de session relisent cette préférence.
 - `printer.py`, `usb.py`, `diagnostics.py` : lectures d’état, transports et
   interprétation des erreurs signalées par couleur.
 - `store.py` : SQLite, observations, profils, consommation, réserve et alertes.
@@ -46,6 +49,10 @@ documentation et les tests explicitement sélectionnés. Une table des empreinte
 est intégrée dans `BUILD_INFO.json`. Aucun chemin du dossier de diagnostic
 historique n’est nécessaire pour ces deux constructions.
 
-`linux/build_brand_assets.py` peut régénérer les icônes et le PDF avec ReportLab,
+`linux/build_brand_assets.py` peut régénérer les icônes et les trois PDF avec ReportLab,
 Pillow, Poppler et Lato. Les ressources déjà incluses suffisent à utiliser et
 construire l’application.
+
+`linux/tests/capture_readme.py` produit les neuf illustrations localisées à
+partir de données isolées. Il ne lit pas l’imprimante ni la base utilisateur.
+Les lanceurs publics n’exposent aucun mode démonstration.

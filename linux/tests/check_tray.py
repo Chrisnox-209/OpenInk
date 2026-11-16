@@ -15,11 +15,13 @@ import gi
 gi.require_version('Gio','2.0')
 from gi.repository import Gio,GLib
 from inkora import __version__
+from inkora.i18n import set_language,tr
 from inkora.service import tray_name
 from inkora.tray import CONTROL,ITEM,MENU
 
 
-def main():
+def main(language='fr'):
+    set_language(language)
     with tempfile.TemporaryDirectory(prefix='openink-dbus-')as temporary:
         root=Path(temporary);database=root/'demo.sqlite3';registered=[]
         environment={**os.environ,'XDG_DATA_HOME':str(root/'data'),'XDG_RUNTIME_DIR':str(root/'runtime'),
@@ -38,13 +40,15 @@ def main():
         script="""from pathlib import Path
 import sys
 from inkora.tray import PanelIcon
+from inkora.i18n import set_language
+set_language(sys.argv[3])
 icon=PanelIcon(Path(sys.argv[1]))
 icon.info={'running':True,'online':True,'color_pages':104,'mono_pages':60}
 icon.poll=lambda:True
 icon.open_ui=lambda:Path(sys.argv[2]).write_text('opened')
 icon.run()
 """
-        process=subprocess.Popen([sys.executable,'-c',script,str(database),str(root/'opened')],env=environment)
+        process=subprocess.Popen([sys.executable,'-c',script,str(database),str(root/'opened'),language],env=environment)
         def call(path,interface,method,args=None):
             return connection.call_sync(tray_name(database),path,interface,method,args,None,Gio.DBusCallFlags.NONE,2000,None)
         try:
@@ -61,9 +65,9 @@ icon.run()
             assert len(properties['IconPixmap'][0][2])==32*32*4
             layout=call('/Menu',MENU,'GetLayout',GLib.Variant('(iias)',(0,-1,[]))).unpack()
             assert len(layout[1][2])==7
-            assert '164 pages'in layout[1][2][2][1]['label']
+            assert tr('164 pages · 104 couleur · 60 noir et blanc')==layout[1][2][2][1]['label']
             call('/Menu',MENU,'GetGroupProperties',GLib.Variant('(aias)',([1,2,3],[])))
-            assert call('/Menu',MENU,'GetProperty',GLib.Variant('(is)',(1,'label'))).unpack()==('Ouvrir OpenInk',)
+            assert call('/Menu',MENU,'GetProperty',GLib.Variant('(is)',(1,'label'))).unpack()==(tr('Ouvrir OpenInk'),)
             call('/Menu',MENU,'AboutToShowGroup',GLib.Variant('(ai)',([0,1],)))
             call('/Menu',MENU,'Event',GLib.Variant('(isvu)',(1,'clicked',GLib.Variant('i',0),0)))
             assert(root/'opened').is_file()
@@ -72,10 +76,11 @@ icon.run()
             assert(root/'opened').is_file()
             call('/StatusNotifierItem',CONTROL,'Quit');process.wait(timeout=4)
             assert process.returncode==0
-            print('D-Bus réel isolé : inscription, icône ARGB, menu, compteurs, activation et arrêt OK.')
+            print(language+': D-Bus réel isolé, inscription, icône ARGB, menu, compteurs, activation et arrêt OK.')
         finally:
             if process.poll()is None:process.terminate();process.wait(timeout=4)
             loop.quit();thread.join(2);connection.unregister_object(identifier)
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    for language in('fr','en','es'):main(language)

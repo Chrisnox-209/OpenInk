@@ -4,8 +4,8 @@ import ipaddress
 import queue
 import threading
 import time
-import tkinter as tk
-from tkinter import ttk, filedialog
+from .widgets import tk,ttk
+from tkinter import filedialog
 
 from .printer import COLORS, NAMES, read_printer
 from .store import DEFAULT_WARNING, DEFAULT_RESERVE
@@ -13,6 +13,7 @@ from .notifications import send_notification
 from .diagnostics import cartridge_diagnostics
 from .reset import capability,request_reset
 from .dialogs import focus_existing,register_dialog,scrollable_content
+from .i18n import tr
 from .branding import ASSETS,initial_geometry,active_monitor
 from . import __version__
 
@@ -36,7 +37,7 @@ def number(value):
 
 def local_date(value, fmt="%d/%m à %H:%M"):
     try:
-        return datetime.fromisoformat(value).astimezone().strftime(fmt)
+        return datetime.fromisoformat(value).astimezone().strftime(tr(fmt))
     except (ValueError, TypeError):
         return "—"
 
@@ -62,9 +63,11 @@ class Application:
         self.reserve_var = tk.StringVar(value=f"{store.setting('reserve_percent', DEFAULT_RESERVE):g}")
         self.notifications_var = tk.BooleanVar(value=store.setting("notifications", True))
         self.startup_var=tk.BooleanVar(value=store.setting('autostart',True))
+        from .i18n import LANGUAGES
+        self.language_var=tk.StringVar(value=LANGUAGES.get(store.setting('language','auto'),'Automatique'))
         self.transport_var=tk.StringVar(value={'network':'Wi-Fi','usb':'USB','auto':'Auto'}.get(store.setting('transport','network'),'Wi-Fi'))
         self.reminder_var=tk.StringVar(value={0:'Rappel : aucun',60:'Rappel : 1 h',240:'Rappel : 4 h'}.get(store.setting('reminder_minutes',0),'Rappel : aucun'))
-        root.title(f"OpenInk {__version__} · Epson XP-2200" + (" · DÉMONSTRATION" if demo else ""))
+        root.title(f"OpenInk {__version__} · Epson XP-2200")
         self.monitor_geometry=active_monitor(root)
         monitor_w,monitor_h,monitor_x,monitor_y=self.monitor_geometry
         width,height,min_width,min_height=initial_geometry(monitor_w,monitor_h)
@@ -149,7 +152,7 @@ class Application:
 
     def text(self, x, y, value, size=11, color=INK, weight="normal", anchor="w", width=0):
         a,b = self.point(x,y)
-        return self.canvas.create_text(a,b,text=value,fill=color,anchor=anchor,
+        return self.canvas.create_text(a,b,text=tr(value),fill=color,anchor=anchor,
                     font=self.font(size,weight,scaled=True),
                     width=width*self.scale*(self.content_stretch if x>=210 else 1)if width else 0)
 
@@ -259,7 +262,7 @@ class Application:
             self.actions.append((area,lambda i=index:self.navigate(i)))
         self.rect(18,698,174,92,"#222D43",12)
         self.circle(35,719,3,"#63D5AE" if self.online else "#97A0B6")
-        self.text(47,720,"IMPRIMANTE" if not self.demo else "DÉMONSTRATION",8,"#B0BAD0","bold")
+        self.text(47,720,"IMPRIMANTE",8,"#B0BAD0","bold")
         self.text(33,746,"Epson XP-2200",12,WHITE,"bold")
         connection='USB · XP-2200' if self.snapshot and self.snapshot.transport=='USB' else 'Wi-Fi · '+self.host
         self.text(33,769,connection,8,"#9FAAC0")
@@ -276,12 +279,8 @@ class Application:
         from .firmware import SAFE_PHASES
         firmware_state=operation(self)
         updating=bool(firmware_state and firmware_state['phase']not in SAFE_PHASES)
-        if self.demo:
-            self.rect(953,31,129,27,"#FFF2D7",7)
-            self.text(1017,45,"MODE DÉMO",8,"#B17C20","bold",anchor="center")
-        else:
-            self.circle(970,45,3,AMBER if updating else"#32B98B" if self.online else "#A1A9B9")
-            self.text(982,45,"Mise à jour"if updating else"Connectée" if self.online else "Hors ligne",9,MUTED)
+        self.circle(970,45,3,AMBER if updating else"#32B98B" if self.online else "#A1A9B9")
+        self.text(982,45,"Mise à jour"if updating else"Connectée" if self.online else "Hors ligne",9,MUTED)
         from .print_ui import show as show_test_page
         self.button(782,28,164,36,'Page de test',None if updating else lambda:show_test_page(self))
         self.button(1100,28,143,36,"Actualisation…" if self.busy else "↻  Actualiser",self.refresh if not self.busy else None)
@@ -298,7 +297,7 @@ class Application:
             page(self)
         self.text(247,832,"●  Vos données restent sur cet ordinateur.",8,MUTED)
         last=local_date(self.snapshot.observed_at,"%H:%M:%S") if self.snapshot else "—"
-        footer=self.notice or ("Dernière lecture  "+last)
+        footer=tr(self.notice or ("Dernière lecture  "+last))
         self.text(1242,832,footer[:112],8,"#C06C51" if self.notice else MUTED,anchor="e")
 
     def printer_drawing(self,x,y):
@@ -492,6 +491,12 @@ class Application:
         self.canvas.create_window(*self.point(611,231),anchor='nw',window=combo,width=173*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(combo)
         self.button(807,231,204,38,"Enregistrer et connecter",self.save_connection)
+        self.text(1030,214,"Langue de l’interface",9,MUTED)
+        from .i18n import LANGUAGES
+        language=ttk.Combobox(self.canvas,textvariable=self.language_var,state='readonly',values=tuple(LANGUAGES.values()))
+        language.bind('<<ComboboxSelected>>',lambda _:self.save_language())
+        self.canvas.create_window(*self.point(1030,231),anchor='nw',window=language,width=189*self.scale*self.content_stretch,height=38*self.scale)
+        self.widgets.append(language)
         self.rect(246,303,997,139,WHITE,14,LINE)
         self.text(270,331,"Estimer selon votre usage",16,INK,"bold")
         combo=ttk.Combobox(self.canvas,textvariable=self.coverage_var,state="readonly",
@@ -529,6 +534,19 @@ class Application:
         self.page=page
         self.notice=""
         self.render()
+
+    def save_language(self):
+        from .i18n import LANGUAGES,set_language
+        if self.dialog:
+            self.language_var.set(LANGUAGES.get(self.store.setting('language','auto'),'Automatique'))
+            self.notice='Ferme le dialogue avant de changer de langue.'
+            focus_existing(self);self.render();return
+        code=next((key for key,label in LANGUAGES.items()if label==self.language_var.get()),'auto')
+        self.store.set_setting('language',code);set_language(code)
+        self.root.title(f'OpenInk {__version__} · Epson XP-2200')
+        self.notice='Langue enregistrée.'
+        self.render()
+        if self.managed:self.service_refresh(True)
 
     def save_connection(self):
         try:
@@ -693,7 +711,7 @@ class Application:
             self.notice="Connectez l’imprimante pour commencer le suivi."
             self.render()
             return
-        path=filedialog.asksaveasfilename(parent=self.root,title="Exporter le suivi OpenInk",defaultextension=".json",initialfile="OpenInk-suivi.json",filetypes=[("Rapport JSON","*.json")])
+        path=filedialog.asksaveasfilename(parent=self.root,title=tr("Exporter le suivi OpenInk"),defaultextension=".json",initialfile="OpenInk-suivi.json",filetypes=[(tr("Rapport JSON"),"*.json")])
         if path:
             try:
                 self.store.export(self.snapshot.printer_id,path)
@@ -783,6 +801,9 @@ class Application:
 
     def close(self):
         self.closed=True
+        for identifier in self.root.tk.call('after','info'):
+            try:self.root.after_cancel(identifier)
+            except tk.TclError:pass
         if self.window_lock:self.window_lock.close()
         self.store.close()
         self.root.destroy()

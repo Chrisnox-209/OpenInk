@@ -73,6 +73,8 @@ class Store:
         return json.loads(row[0]) if row else default
 
     def set_setting(self, key, value):
+        if key=='language'and value not in('auto','fr','en','es'):
+            raise ValueError('Langue non prise en charge.')
         if key=='reminder_minutes':
             value=int(value)
             if value!=0 and not 15<=value<=1440:raise ValueError('Rappel : 0 ou 15 à 1 440 minutes.')
@@ -337,7 +339,7 @@ class Store:
 
     def export(self, printer, path):
         readings = [json.loads(r[0]) for r in self.db.execute("SELECT payload FROM readings WHERE printer=? ORDER BY id", (printer,))]
-        data = {"application": "OpenInk 1.5", "exported_at": datetime.now(timezone.utc).isoformat(),
+        data = {"application": "OpenInk 1.6", "exported_at": datetime.now(timezone.utc).isoformat(),
                 "printer": printer, "readings": readings, "events": self.events(printer, 100000),
                 "estimation_settings": {"coverage": self.setting("coverage", 1.0),
                     "warning_percent": self.setting("warning_percent", DEFAULT_WARNING),

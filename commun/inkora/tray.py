@@ -9,6 +9,7 @@ import subprocess
 import threading
 
 from . import __version__
+from .i18n import tr,set_language,saved_language
 from .branding import ASSETS
 from .service import launch_command,launch_environment,request,tray_name,stop_desktop
 
@@ -103,7 +104,7 @@ class PanelIcon:
     def properties(self,identifier,names=()):
         result=self.menu_items().get(identifier)
         if result is None:raise ValueError('Élément de menu inconnu')
-        return {key:self.GLib.Variant('b'if isinstance(value,bool)else's',value)
+        return {key:self.GLib.Variant('b'if isinstance(value,bool)else's',tr(value))
                 for key,value in result.items()if not names or key in names}
 
     def layout(self,identifier,depth,names):
@@ -123,7 +124,7 @@ class PanelIcon:
                 'IconPixmap':('a(iiay)',self.pixmaps),'IconThemePath':('s',str(ASSETS)),
                 'OverlayIconName':('s',''),'OverlayIconPixmap':('a(iiay)',[]),
                 'AttentionIconName':('s','dialog-warning'),'AttentionIconPixmap':('a(iiay)',self.pixmaps),
-                'AttentionMovieName':('s',''),'ToolTip':('(sa(iiay)ss)',('openink',self.pixmaps,'OpenInk',html.escape(status+'\n'+pages))),
+                'AttentionMovieName':('s',''),'ToolTip':('(sa(iiay)ss)',('openink',self.pixmaps,'OpenInk',html.escape(tr(status)+'\n'+tr(pages)))),
                 'ItemIsMenu':('b',False),'Menu':('o','/Menu')}
         signature,value=values[name];return G.Variant(signature,value)
 
@@ -186,6 +187,7 @@ class PanelIcon:
         if not self.polling:
             self.polling=True
             def worker():
+                set_language(saved_language(self.database))
                 try:info=request(self.database,timeout=1.5)
                 except (OSError,ValueError):info={'running':False}
                 self.GLib.idle_add(self.received,info)
@@ -195,7 +197,10 @@ class PanelIcon:
     def received(self,info):
         self.polling=False
         if self.closed:return False
-        if info!=self.info:
+        from .i18n import get_language
+        locale_changed=get_language()!=getattr(self,'display_language',None)
+        self.display_language=get_language()
+        if info!=self.info or locale_changed:
             self.info=info;self.revision+=1
             self.connection.emit_signal(None,'/StatusNotifierItem',ITEM,'NewToolTip',None)
             self.connection.emit_signal(None,'/Menu',MENU,'LayoutUpdated',self.GLib.Variant('(ui)',(self.revision,0)))

@@ -12,14 +12,14 @@ def main():
     destination=root/"linux/dist"
     destination.mkdir(exist_ok=True)
     files=sorted(p for p in (root/"commun/inkora").rglob('*') if p.is_file()and'__pycache__'not in p.parts and p.suffix!='.pyc')
-    files += [root/"README.md",root/'THIRD_PARTY_NOTICES.md',root/'CONTRIBUTING.md']
+    files += [*sorted(root.glob("README*.md")),root/'THIRD_PARTY_NOTICES.md',root/'CONTRIBUTING.md']
     files += sorted(p for p in (root/'docs').rglob('*') if p.is_file())
     files += [root/"linux"/name for name in ("inkora_linux.py","openink_linux.py","Lancer-Inkora.sh","Lancer-OpenInk.sh","installer_raccourci.py","openink.svg","build_deb.py","build_linux.py","build_brand_assets.py")]
     files += sorted(p for p in (root/'linux/tests').rglob('*') if p.is_file()and'__pycache__'not in p.parts and p.suffix!='.pyc')
-    manifest={"application":"OpenInk","version":"1.5.0","platform":"Ubuntu",
+    manifest={"application":"OpenInk","version":"1.6.0","platform":"Ubuntu",
               "requires":"Python >= 3.10, Tkinter, PyGObject, GLib, libusb, systemd and CUPS client",
               "sha256":{str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
-    target=destination/"OpenInk-Ubuntu-1.5.0-sources.tar.gz"
+    target=destination/"OpenInk-Ubuntu-1.6.0-sources.tar.gz"
     with tarfile.open(target,"w:gz") as archive:
         for p in files:
             archive.add(p,arcname="OpenInk/"+str(p.relative_to(root)))

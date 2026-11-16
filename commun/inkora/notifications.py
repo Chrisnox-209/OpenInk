@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import time
+from .i18n import tr
 
 
 class DesktopNotifications:
@@ -43,11 +44,11 @@ class DesktopNotifications:
             'org.freedesktop.Notifications','GetCapabilities',None,GLib.VariantType.new('(as)'),
             Gio.DBusCallFlags.NONE,3000,None)
         capabilities=result.unpack()[0]
-        actions=['open','Ouvrir OpenInk'] if 'actions' in capabilities else []
+        actions=['open',tr('Ouvrir OpenInk')] if 'actions' in capabilities else []
         # Reserve alerts stay at normal urgency: the desktop decides how to
         # present them, including its Do Not Disturb setting.
         hints={'desktop-entry':GLib.Variant('s','openink'), 'urgency':GLib.Variant('y',1)}
-        args=GLib.Variant('(susssasa{sv}i)',('OpenInk',0,'openink',title,detail,actions,hints,-1))
+        args=GLib.Variant('(susssasa{sv}i)',('OpenInk',0,'openink',tr(title),tr(detail),actions,hints,-1))
         reply=self.connection.call_sync('org.freedesktop.Notifications','/org/freedesktop/Notifications',
             'org.freedesktop.Notifications','Notify',args,GLib.VariantType.new('(u)'),
             Gio.DBusCallFlags.NONE,3000,None)
@@ -74,7 +75,7 @@ def send_notification(title, detail):
         return False
     try:
         result = subprocess.run([command, "--app-name=OpenInk", "--icon=dialog-warning",
-                                 title, detail], capture_output=True, timeout=5)
+                                 tr(title), tr(detail)], capture_output=True, timeout=5)
         return result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
