@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 
-VERSION='1.6.0'
+VERSION='1.7.0'
 
 
 def write(root,path,text,mode=0o644):

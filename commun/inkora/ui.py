@@ -4,7 +4,7 @@ import ipaddress
 import queue
 import threading
 import time
-from .widgets import tk,ttk
+from .widgets import tk,ttk,Switch
 from tkinter import filedialog
 
 from .printer import COLORS, NAMES, read_printer
@@ -16,6 +16,7 @@ from .dialogs import focus_existing,register_dialog,scrollable_content
 from .i18n import tr
 from .branding import ASSETS,initial_geometry,active_monitor
 from . import __version__
+from .theme import color as theme_color
 
 BG = "#F4F6FB"
 WHITE = "#FFFFFF"
@@ -45,6 +46,9 @@ def local_date(value, fmt="%d/%m à %H:%M"):
 class Application:
     def __init__(self, root, store, demo=False,managed=False):
         self.root, self.store, self.demo = root, store, demo
+        self.theme=store.setting('theme','light')
+        if self.theme not in('light','dark'):self.theme='light'
+        root._openink_theme=self.theme
         self.managed=managed
         self.service_polling=False
         self.last_service_poll=0
@@ -73,7 +77,7 @@ class Application:
         width,height,min_width,min_height=initial_geometry(monitor_w,monitor_h)
         root.geometry(f'{width}x{height}{monitor_x+(monitor_w-width)//2:+d}{monitor_y+(monitor_h-height)//2:+d}')
         root.minsize(min_width,min_height)
-        root.configure(bg=BG)
+        root.configure(bg=self.color(BG))
         self.family = "Lato"
         from tkinter import font
         families = font.families(root)
@@ -86,10 +90,7 @@ class Application:
         style = ttk.Style(root)
         self.style=style
         style.theme_use("clam")
-        style.configure("TCombobox", padding=7, fieldbackground=WHITE, foreground=INK,
-                        background=WHITE, bordercolor=LINE, arrowcolor=PURPLE)
-        style.configure("TCheckbutton", background=WHITE, foreground=INK, padding=7,font=self.font(11))
-        style.map("TCheckbutton", background=[("active", WHITE)])
+        self.apply_theme_style()
         self.canvas = tk.Canvas(root, bg=BG, highlightthickness=0, takefocus=True)
         self.canvas.pack(fill="both", expand=True)
         self.widgets, self.actions = [], []
@@ -108,6 +109,28 @@ class Application:
         root.after(15000, self.auto_refresh)
         from .firmware_ui import poll as firmware_poll
         root.after(1000,lambda:firmware_poll(self))
+
+    def color(self,value,foreground=False):return theme_color(value,self.theme,foreground)
+
+    def apply_theme_style(self):
+        surface,ink,line,accent=[self.color(v)for v in(WHITE,INK,LINE,PURPLE)]
+        self.style.configure('TCombobox',padding=7,fieldbackground=surface,foreground=ink,
+                             background=surface,bordercolor=line,arrowcolor=accent,
+                             lightcolor=line,darkcolor=line,selectbackground=accent,selectforeground=WHITE)
+        self.style.map('TCombobox',fieldbackground=[('readonly',surface),('disabled',self.color('#F0F2F7'))],
+                       foreground=[('disabled',self.color(MUTED)),('readonly',ink)],
+                       background=[('active',surface)],selectbackground=[('readonly',accent)],selectforeground=[('readonly',WHITE)])
+        self.style.configure('TCheckbutton',background=surface,foreground=ink,padding=7,font=self.font(11),
+                             indicatorbackground=surface,indicatorforeground=ink,bordercolor=line)
+        self.style.map('TCheckbutton',background=[('active',surface)],foreground=[('disabled',self.color(MUTED))],
+                       indicatorbackground=[('selected',accent),('!selected',surface)],indicatorforeground=[('selected',WHITE)])
+        self.style.configure('TScrollbar',background=self.color('#CBD2E1'),troughcolor=surface,
+                             bordercolor=surface,arrowcolor=ink,lightcolor=line,darkcolor=line)
+        self.style.map('TScrollbar',background=[('active',self.color('#9BA8C0'))])
+        self.root.option_add('*TCombobox*Listbox.background',surface)
+        self.root.option_add('*TCombobox*Listbox.foreground',ink)
+        self.root.option_add('*TCombobox*Listbox.selectBackground',accent)
+        self.root.option_add('*TCombobox*Listbox.selectForeground',WHITE)
 
     def _icon(self):
         from PIL import Image
@@ -140,7 +163,7 @@ class Application:
         if x>=210:x=210+(x-210)*getattr(self,'content_stretch',1)
         return self.ox+x*self.scale, self.oy+y*self.scale
 
-    def rect(self, x, y, w, h, fill, radius=14, outline=None, width=1):
+    def rect(self, x, y, w, h, fill, radius=14, outline=None, width=1,foreground=False):
         r = min(radius, w/2, h/2)
         points = [x+r,y,x+w-r,y,x+w,y,x+w,y+r,x+w,y+h-r,x+w,y+h,x+w-r,y+h,
                   x+r,y+h,x,y+h,x,y+h-r,x,y+r,x,y]
@@ -148,21 +171,21 @@ class Application:
         for i in range(0,len(points),2):
             flat.extend(self.point(points[i],points[i+1]))
         return self.canvas.create_polygon(flat, smooth=True, splinesteps=24,
-                   fill=fill, outline=outline or fill, width=max(1,width*self.scale))
+                   fill=self.color(fill,foreground), outline=self.color(outline or fill,foreground), width=max(1,width*self.scale))
 
     def text(self, x, y, value, size=11, color=INK, weight="normal", anchor="w", width=0):
         a,b = self.point(x,y)
-        return self.canvas.create_text(a,b,text=tr(value),fill=color,anchor=anchor,
+        return self.canvas.create_text(a,b,text=tr(value),fill=self.color(color,True),anchor=anchor,
                     font=self.font(size,weight,scaled=True),
                     width=width*self.scale*(self.content_stretch if x>=210 else 1)if width else 0)
 
-    def line(self, x1,y1,x2,y2, color=LINE, width=1):
-        return self.canvas.create_line(*self.point(x1,y1),*self.point(x2,y2),fill=color,width=width*self.scale)
+    def line(self, x1,y1,x2,y2, color=LINE, width=1,foreground=False):
+        return self.canvas.create_line(*self.point(x1,y1),*self.point(x2,y2),fill=self.color(color,foreground),width=width*self.scale)
 
-    def circle(self,x,y,r,color,outline=None,width=1):
+    def circle(self,x,y,r,color,outline=None,width=1,foreground=False):
         cx,cy=self.point(x,y);radius=r*self.scale
         return self.canvas.create_oval(cx-radius,cy-radius,cx+radius,cy+radius,
-                    fill=color,outline=outline or color,width=width*self.scale)
+                    fill=self.color(color,foreground),outline=self.color(outline or color,foreground),width=width*self.scale)
 
     def button(self,x,y,w,h,label,callback,primary=False,subtle=False,icon=None):
         enabled = callback is not None
@@ -177,10 +200,10 @@ class Application:
             self.actions.append((shape,callback))
             def enter(_e):
                 self.canvas.configure(cursor="hand2")
-                self.canvas.itemconfigure(shape,fill="#6852DC" if primary else "#EBE8FB")
+                self.canvas.itemconfigure(shape,fill=self.color("#6852DC" if primary else "#EBE8FB"))
             def leave(_e):
                 self.canvas.configure(cursor="")
-                self.canvas.itemconfigure(shape,fill=fill)
+                self.canvas.itemconfigure(shape,fill=self.color(fill))
             for item in (shape,txt):
                 self.canvas.tag_bind(item,"<Enter>",enter)
                 self.canvas.tag_bind(item,"<Leave>",leave)
@@ -196,7 +219,7 @@ class Application:
         if self.actions:
             self.focus_action=(self.focus_action+1)%len(self.actions)
             for i,(shape,_fn) in enumerate(self.actions):
-                self.canvas.itemconfigure(shape,outline=PURPLE if i==self.focus_action else self.canvas.itemcget(shape,"fill"),width=2 if i==self.focus_action else 1)
+                self.canvas.itemconfigure(shape,outline=self.color(PURPLE)if i==self.focus_action else self.canvas.itemcget(shape,"fill"),width=2 if i==self.focus_action else 1)
         return "break"
 
     def activate_focus(self,_event):
@@ -206,17 +229,17 @@ class Application:
     def nav_icon(self,x,y,index,color):
         if index==0:
             for a,b in ((0,0),(10,0),(0,10),(10,10)):
-                self.rect(x+a,y+b,6,6,color,2)
+                self.rect(x+a,y+b,6,6,color,2,foreground=True)
         elif index==1:
-            self.rect(x+2,y+4,13,15,color,3)
-            self.rect(x+5,y,7,6,color,2)
+            self.rect(x+2,y+4,13,15,color,3,foreground=True)
+            self.rect(x+5,y,7,6,color,2,foreground=True)
         elif index==2:
-            self.circle(x+9,y+9,8,NAV,color,1.5)
-            self.line(x+9,y+4,x+9,y+9,color,1.5)
-            self.line(x+9,y+9,x+13,y+11,color,1.5)
+            self.circle(x+9,y+9,8,NAV,color,1.5,foreground=True)
+            self.line(x+9,y+4,x+9,y+9,color,1.5,foreground=True)
+            self.line(x+9,y+9,x+13,y+11,color,1.5,foreground=True)
         else:
-            self.circle(x+9,y+9,8,NAV,color,2)
-            self.circle(x+9,y+9,3,color)
+            self.circle(x+9,y+9,8,NAV,color,2,foreground=True)
+            self.circle(x+9,y+9,3,color,foreground=True)
 
     def render(self):
         if self.closed:
@@ -236,10 +259,10 @@ class Application:
             widget.destroy()
         self.widgets=[]
         self.canvas.delete("all")
-        self.canvas.create_rectangle(0,0,w,h,fill=BG,outline=BG)
+        self.canvas.create_rectangle(0,0,w,h,fill=self.color(BG),outline=self.color(BG))
         self.actions=[]
         self.focus_action=-1
-        self.canvas.create_rectangle(0,0,210*self.scale,h,fill=NAV,outline=NAV,tags='sidebar-background')
+        self.canvas.create_rectangle(0,0,210*self.scale,h,fill=self.color(NAV),outline=self.color(NAV),tags='sidebar-background')
         self.canvas.create_image(*self.point(24,25),image=self.brand_image(),anchor='nw')
         self.text(72,46,"OpenInk",23,WHITE,"bold")
         self.text(29,87,"L’ENCRE, EN TOUTE CLARTÉ",8,"#8C98B0","bold")
@@ -486,49 +509,110 @@ class Application:
         self.rect(246,154,997,132,WHITE,14,LINE)
         self.text(270,183,"Connexion à l’imprimante",16,INK,"bold")
         self.text(270,214,"Adresse IPv4 de l’Epson sur votre réseau local",10,MUTED)
-        self.entry(270,231,325,self.host_var)
+        self.entry(270,231,484,self.host_var)
         combo=ttk.Combobox(self.canvas,textvariable=self.transport_var,state='readonly',values=('Wi-Fi','USB','Auto'))
-        self.canvas.create_window(*self.point(611,231),anchor='nw',window=combo,width=173*self.scale*self.content_stretch,height=38*self.scale)
+        self.canvas.create_window(*self.point(773,231),anchor='nw',window=combo,width=173*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(combo)
-        self.button(807,231,204,38,"Enregistrer et connecter",self.save_connection)
-        self.text(1030,214,"Langue de l’interface",9,MUTED)
+        self.button(968,231,251,38,"Enregistrer et connecter",self.save_connection)
+
+        # Language and theme have their own card, apart from printer connection.
+        self.rect(246,300,486,149,WHITE,14,LINE)
+        self.text(270,328,"Apparence",16,INK,"bold")
+        self.text(270,356,"Langue de l’interface",9,MUTED)
         from .i18n import LANGUAGES
         language=ttk.Combobox(self.canvas,textvariable=self.language_var,state='readonly',values=tuple(LANGUAGES.values()))
         language.bind('<<ComboboxSelected>>',lambda _:self.save_language())
-        self.canvas.create_window(*self.point(1030,231),anchor='nw',window=language,width=189*self.scale*self.content_stretch,height=38*self.scale)
+        self.canvas.create_window(*self.point(270,370),anchor='nw',window=language,width=205*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(language)
-        self.rect(246,303,997,139,WHITE,14,LINE)
-        self.text(270,331,"Estimer selon votre usage",16,INK,"bold")
+        self.text(500,356,"Thème",9,MUTED)
+        for code,label,x,width in(('light','Clair',500,96),('dark','Sombre',606,102)):
+            selected=self.theme==code
+            choice=tk.Button(self.canvas,text=label,command=lambda v=code:self.save_theme(v),
+                             bg=PURPLE if selected else WHITE,fg=WHITE if selected else INK,
+                             activebackground='#6852DC'if selected else'#EBE8FB',
+                             activeforeground=WHITE if selected else INK,relief='flat',cursor='hand2',
+                             font=self.font(10,'bold',scaled=True),takefocus=True)
+            self.canvas.create_window(*self.point(x,370),anchor='nw',window=choice,
+                                      width=width*self.scale*self.content_stretch,height=38*self.scale)
+            self.widgets.append(choice)
+        self.text(270,429,"Préférences enregistrées automatiquement.",8,MUTED,width=440)
+
+        self.rect(748,300,495,149,WHITE,14,LINE)
+        self.text(772,328,"Estimer selon votre usage",16,INK,"bold")
+        self.text(772,356,"Adapter aux documents imprimés.",9,MUTED)
         combo=ttk.Combobox(self.canvas,textvariable=self.coverage_var,state="readonly",
                           values=("Documents courants","Documents chargés","Photos / aplats"))
-        self.canvas.create_window(*self.point(270,352),anchor="nw",window=combo,width=514*self.scale*self.content_stretch,height=38*self.scale)
+        self.canvas.create_window(*self.point(772,370),anchor="nw",window=combo,width=266*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(combo)
-        self.button(807,352,204,38,"Appliquer cet usage",self.save_coverage)
-        self.text(270,418,"La consommation déjà enregistrée reste acquise. Les nouvelles pages utilisent le nouvel usage.",9,MUTED,width=930)
-        self.rect(246,458,997,211,WHITE,14,LINE)
-        self.text(270,486,"Prévoir le remplissage",16,INK,"bold")
-        self.text(270,518,"Alerte à (%)",10,MUTED)
-        self.text(545,518,"Réserve de précaution (%)",10,MUTED)
-        self.entry(270,533,235,self.warning_var)
-        self.entry(545,533,235,self.reserve_var)
-        self.button(807,533,204,38,"Enregistrer les seuils",self.save_safety)
-        self.text(270,596,"30 % : préparer le remplacement. 20 % : réserve atteinte. Seuils indicatifs et réglables.",9,MUTED)
+        self.button(1050,370,169,38,"Appliquer cet usage",self.save_coverage)
+        self.text(772,429,"La consommation déjà enregistrée reste acquise.",8,MUTED,width=443)
+
+        self.rect(246,463,997,194,WHITE,14,LINE)
+        self.text(270,491,"Prévoir le remplissage",16,INK,"bold")
+        self.text(270,522,"Alerte à (%)",10,MUTED)
+        self.text(545,522,"Réserve de précaution (%)",10,MUTED)
+        self.entry(270,536,235,self.warning_var)
+        self.entry(545,536,235,self.reserve_var)
+        self.button(807,536,204,38,"Enregistrer les seuils",self.save_safety)
         check=ttk.Checkbutton(self.canvas,text="Notifications sur le bureau, même fenêtre fermée",
                               variable=self.notifications_var,command=self.save_safety)
-        self.canvas.create_window(*self.point(263,613),anchor="nw",window=check,width=690*self.scale*self.content_stretch,height=42*self.scale)
+        self.canvas.create_window(*self.point(263,587),anchor="nw",window=check,width=690*self.scale*self.content_stretch,height=36*self.scale)
         self.widgets.append(check)
         reminder=ttk.Combobox(self.canvas,textvariable=self.reminder_var,state='readonly',values=('Rappel : aucun','Rappel : 1 h','Rappel : 4 h'))
         reminder.bind('<<ComboboxSelected>>',lambda _:self.save_safety())
-        self.canvas.create_window(*self.point(975,618),anchor='nw',window=reminder,width=245*self.scale*self.content_stretch,height=32*self.scale)
+        self.canvas.create_window(*self.point(975,590),anchor='nw',window=reminder,width=245*self.scale*self.content_stretch,height=32*self.scale)
         self.widgets.append(reminder)
-        self.rect(246,686,997,110,WHITE,14,LINE)
-        self.text(270,714,"Surveillance de session",15,INK,"bold")
-        self.text(270,742,"Fermer la fenêtre conserve l’icône et le suivi dans le panneau.",9,MUTED,width=680)
-        checkbox=ttk.Checkbutton(self.canvas,text='Démarrer en mode icône à la connexion',variable=self.startup_var,
-                                 command=lambda:self.store.set_setting('autostart',self.startup_var.get()))
-        self.canvas.create_window(*self.point(263,750),anchor='nw',window=checkbox,width=650*self.scale*self.content_stretch,height=42*self.scale)
-        self.widgets.append(checkbox)
-        self.button(997,728,222,37,"Quitter et arrêter le suivi",self.stop_and_quit)
+        self.text(270,642,"30 % : préparer le remplacement. 20 % : réserve atteinte. Seuils indicatifs et réglables.",8,MUTED,width=930)
+
+        self.rect(246,671,997,134,WHITE,14,LINE)
+        self.text(270,699,"Au démarrage d’Ubuntu",15,INK,"bold")
+        info=tk.Button(self.canvas,text='?',command=self.startup_information,bg='#E8F1FF',fg='#2563EB',
+                       activebackground='#E8F1FF',activeforeground='#2563EB',font=self.font(11,'bold',scaled=True),
+                       relief='flat',borderwidth=0,cursor='hand2',takefocus=True)
+        self.canvas.create_window(*self.point(552,688),anchor='nw',window=info,width=24*self.scale,height=24*self.scale)
+        self.widgets.append(info)
+        self.text(270,725,"Suivi discret avec une icône dans le panneau.",10,MUTED,width=650)
+        switch=Switch(self.canvas,self.startup_var,self.save_startup,bg=WHITE)
+        self.canvas.create_window(*self.point(270,751),anchor='nw',window=switch,width=48*self.scale,height=28*self.scale)
+        self.widgets.append(switch)
+        self.text(330,766,'Lancer minimisé à la connexion',11,INK)
+        self.text(850,766,'Activé'if self.startup_var.get()else'Désactivé',9,PURPLE if self.startup_var.get()else MUTED,'bold',anchor='e')
+        self.button(997,745,222,37,"Quitter et arrêter le suivi",self.stop_and_quit)
+
+    def save_theme(self,theme):
+        if self.dialog:
+            self.notice='Ferme le dialogue avant de changer de thème.'
+            focus_existing(self);self.render();return
+        self.store.set_setting('theme',theme);self.theme=theme;self.root._openink_theme=theme
+        self.root.configure(bg=self.color(BG));self.canvas.configure(bg=self.color(BG))
+        self.apply_theme_style();self.notice='Thème enregistré.';self.render()
+
+    def save_startup(self):
+        self.store.set_setting('autostart',self.startup_var.get())
+        self.notice='Démarrage minimisé activé.'if self.startup_var.get()else'Démarrage automatique désactivé pour les prochaines connexions.'
+        self.render()
+
+    def startup_information(self):
+        if focus_existing(self):return
+        win=register_dialog(self,tk.Toplevel(self.root),modal=True)
+        win.title('Le suivi au démarrage');win.configure(bg=WHITE);win.transient(self.root)
+        scale=max(.8,self.scale)
+        width=min(round(660*scale),self.monitor_geometry[0]-40)
+        height=min(round(460*scale),self.monitor_geometry[1]-80)
+        win.geometry(f'{width}x{height}')
+        body,footer=scrollable_content(win,WHITE)
+        tk.Label(body,text='Garder votre historique à jour',bg=WHITE,fg=INK,
+                 font=self.font(18,'bold',scaled=True),wraplength=width-70,justify='left').pack(anchor='w',pady=(0,16))
+        paragraphs=(
+            'Pour enregistrer l’historique en continu et recevoir les alertes d’encre, OpenInk doit rester actif en arrière-plan pendant votre session Ubuntu.',
+            'Active le lancement minimisé pour démarrer automatiquement avec une icône dans le panneau, sans ouvrir de fenêtre. Fermer la fenêtre conserve le suivi.',
+            'Si cette option est désactivée, ouvre OpenInk manuellement après la connexion. Le réglage concerne les prochaines connexions et n’arrête pas le suivi en cours.',
+            'Ordinateur éteint ou session fermée : aucune observation ni notification. À la prochaine lecture, les compteurs peuvent rattraper le total des pages, sans retrouver les heures exactes des impressions.')
+        for paragraph in paragraphs:
+            tk.Label(body,text=paragraph,bg=WHITE,fg=MUTED,font=self.font(11,scaled=True),
+                     wraplength=width-80,justify='left').pack(anchor='w',pady=(0,14))
+        tk.Button(footer,text='Compris',command=win.destroy,bg=PURPLE,fg=WHITE,relief='flat',padx=22,pady=10).pack(side='right')
+        win.protocol('WM_DELETE_WINDOW',win.destroy);win.bind('<Escape>',lambda _:win.destroy())
 
     def navigate(self,page):
         self.page=page

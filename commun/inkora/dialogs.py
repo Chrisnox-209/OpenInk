@@ -1,6 +1,5 @@
 """Non-blocking Tk dialog lifecycle, including delayed Wayland mapping."""
-import tkinter as tk
-from tkinter import ttk
+from .widgets import tk,ttk
 
 
 def focus_existing(owner):

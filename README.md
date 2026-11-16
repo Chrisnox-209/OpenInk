@@ -9,7 +9,7 @@
 <p align="center">Suivi indicatif de l’encre et notifications Ubuntu pour Epson XP-2200.</p>
 
 <p align="center">
-  <img alt="Version 1.6.0" src="https://img.shields.io/badge/version-1.6.0-795CF5">
+  <img alt="Version 1.7.0" src="https://img.shields.io/badge/version-1.7.0-795CF5">
   <img alt="Plateforme Ubuntu amd64" src="https://img.shields.io/badge/plateforme-Ubuntu_amd64-E95420">
   <img alt="Python 3.10 ou supérieur" src="https://img.shields.io/badge/Python-%E2%89%A5_3.10-3776AB">
   <img alt="Interface Tkinter" src="https://img.shields.io/badge/interface-Tkinter-00B7E8">
@@ -58,7 +58,7 @@ conservée avec ses fichiers et sa licence d’origine.
 | Historique | Données locales SQLite et export JSON |
 | Page de test | PDF A4 avec logo OpenInk, aplats CMJN, intensités, textes et traits fins |
 | Firmware OpenFlow | Assistant USB, sauvegarde préalable, intégrité vérifiée, acceptation explicite |
-| Interface | Logo vectoriel, pourcentages, fenêtre adaptée au moniteur choisi |
+| Interface | Thèmes clair/sombre, logo vectoriel, pourcentages et fenêtre adaptée au moniteur |
 | Langues | Français, anglais et espagnol ; choix dans Réglages et détection du système |
 
 ## Prérequis
@@ -82,15 +82,15 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ### Télécharger le paquet prêt à installer
 
-La [version v1.6.0](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.6.0)
+La [version v1.7.0](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0)
 propose le paquet Ubuntu **amd64**, l’archive des sources et `SHA256SUMS`.
 
-Télécharger `openink_1.6.0_amd64.deb` et `SHA256SUMS` dans le même dossier,
+Télécharger `openink_1.7.0_amd64.deb` et `SHA256SUMS` dans le même dossier,
 fermer l’ancienne application, puis ouvrir un terminal dans ce dossier :
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./openink_1.6.0_amd64.deb
+sudo apt install ./openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -105,7 +105,7 @@ git clone https://github.com/Chrisnox-209/OpenInk.git
 cd OpenInk
 sudo apt install dpkg-dev desktop-file-utils
 python3 linux/build_deb.py
-sudo apt install ./linux/dist/openink_1.6.0_amd64.deb
+sudo apt install ./linux/dist/openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -128,7 +128,7 @@ Le menu indique l’état et les compteurs, propose une actualisation et permet
 de **Quitter et arrêter le suivi**. Ce dernier choix arrête les processus de
 session, sans interrompre un contrôleur de flash.
 
-L’option **Démarrer en mode icône à la connexion** se trouve dans Réglages.
+Dans **Réglages > Au démarrage d’Ubuntu**, l’interrupteur **Lancer minimisé à la connexion** active ou désactive le lancement automatique avec l’icône. Le bouton **? bleu** explique le suivi en arrière-plan. Le choix s’applique aux prochaines connexions et ne coupe pas le suivi en cours.
 L’indicateur utilise le protocole StatusNotifierItem. Sous GNOME, le panneau
 doit prendre en charge les indicateurs d’application ; Ubuntu fournit
 habituellement cette intégration. Si le panneau ne l’affiche pas, le suivi
@@ -162,12 +162,12 @@ openink --stop-agent    # Arrêter la surveillance
 openink --help          # Toutes les options
 ```
 
-## Langues de l’application
+## Langue et apparence
 
 Le français reste la version principale de ce README. Les guides
 [anglais](README.en.md) et [espagnol](README.es.md) décrivent les mêmes fonctions.
 
-Dans **Réglages > Langue de l’interface**, choisir **Français**, **English**,
+Dans **Réglages > Apparence > Langue de l’interface**, choisir **Français**, **English**,
 **Español** ou **Automatique**. Le choix est enregistré et l’interface se met
 à jour immédiatement. Le menu du panneau et les notifications suivent cette
 préférence ; les historiques et les compteurs restent conservés.
@@ -179,6 +179,10 @@ openink --lang es
 ```
 
 ![Réglages et choix de langue](docs/images/openink-fr-settings.png)
+
+Le même encart **Apparence** permet de choisir **Clair** ou **Sombre**. Le thème sombre utilise des gris anthracite inspirés de Discord et s’applique aux cinq vues, menus, champs et dialogues. Le choix est immédiat et conservé au prochain lancement.
+
+![Réglages en thème sombre anthracite](docs/images/openink-fr-settings-dark.png)
 
 ## Premier lancement et suivi de l’encre
 
@@ -308,6 +312,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONWARNINGS=error::ResourceWarning \
 # Contrôles graphiques isolés ; nécessitent un affichage
 python3 linux/tests/check_interface.py
 python3 linux/tests/check_i18n.py
+python3 linux/tests/check_appearance.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 
 # Construction sans installation ni accès matériel
@@ -328,7 +333,7 @@ python3 linux/build_brand_assets.py
 
 L’image OpenFlow (V2) est fournie et contrôlée à l’import/construction ; ce dépôt ne contient
 pas les outils de recherche historiques nécessaires à sa reconstruction.
-Voir [la validation et les limites](docs/OPENINK_1.6.md),
+Voir [la validation et les limites](docs/OPENINK_1.7.md),
 [l’architecture](docs/ARCHITECTURE.md) et les
 [conventions de contribution](CONTRIBUTING.md).
 

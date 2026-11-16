@@ -184,7 +184,7 @@ def main():
                 modes=[w for w in children(win)if isinstance(w,ttk.Combobox)and tuple(w.cget('values'))==MODES]
                 modes[1].current(1);modes[1].event_generate('<<ComboboxSelected>>')
                 modes[2].current(2);modes[2].event_generate('<<ComboboxSelected>>');root.update()
-                entries=[w for w in children(win)if type(w)is tk.Entry]
+                entries=[w for w in children(win)if w.winfo_class()=='Entry']
                 entries[2].insert(0,'40')
                 next(w for w in checks if 'déclarées pleines'in w.cget('text')).invoke()
                 next(w for w in checks if 'j’accepte les risques'in w.cget('text')).invoke()

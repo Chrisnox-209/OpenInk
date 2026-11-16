@@ -7,7 +7,7 @@
 <p align="center">Estimated ink tracking, Ubuntu notifications and OpenFlow firmware for Epson XP-2200.</p>
 
 <p align="center">
-  <img alt="Version 1.6.0" src="https://img.shields.io/badge/version-1.6.0-795CF5">
+  <img alt="Version 1.7.0" src="https://img.shields.io/badge/version-1.7.0-795CF5">
   <img alt="Ubuntu amd64" src="https://img.shields.io/badge/platform-Ubuntu_amd64-E95420">
   <img alt="Python 3.10 or later" src="https://img.shields.io/badge/Python-%E2%89%A5_3.10-3776AB">
   <img alt="Tkinter" src="https://img.shields.io/badge/interface-Tkinter-00B7E8">
@@ -76,13 +76,13 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ### Ready-to-install Ubuntu package
 
-Download `openink_1.6.0_amd64.deb` and `SHA256SUMS` from
-[Releases](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.6.0) into the
+Download `openink_1.7.0_amd64.deb` and `SHA256SUMS` from
+[Releases](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0) into the
 same folder. Close the previous window, open a terminal in that folder and run:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./openink_1.6.0_amd64.deb
+sudo apt install ./openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -98,7 +98,7 @@ git clone https://github.com/Chrisnox-209/OpenInk.git
 cd OpenInk
 sudo apt install dpkg-dev desktop-file-utils
 python3 linux/build_deb.py
-sudo apt install ./linux/dist/openink_1.6.0_amd64.deb
+sudo apt install ./linux/dist/openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -123,7 +123,7 @@ not install dependencies or USB rules.
 
 French remains the default repository README. The application supports
 **Français**, **English**, **Español** and the system default in
-**Settings > Interface language**. The selection is saved and the window
+**Settings > Appearance > Interface language**. The selection is saved and the window
 updates immediately. The panel menu, notifications and test page follow it.
 Page counters, cartridge profiles and historical data are preserved.
 
@@ -135,6 +135,10 @@ openink --lang es
 
 ![English settings and language selector](docs/images/openink-en-settings.png)
 
+The dedicated **Appearance** card also offers **Light** and **Dark**. Dark mode uses charcoal greys inspired by Discord across all five views, menus, fields and dialogues. The choice takes effect immediately and is saved for the next launch.
+
+![Charcoal dark settings](docs/images/openink-en-settings-dark.png)
+
 ## Panel icon and automatic startup
 
 At login, OpenInk starts **without a window**, with the panel icon and the
@@ -143,7 +147,7 @@ Closing the window keeps tracking and notifications active. The icon menu
 shows status and counters, refreshes monitoring and offers **Quit and stop monitoring**.
 Stopping monitoring does not interrupt a firmware worker.
 
-Configure startup in **Settings > Start in tray mode at login**. The icon uses
+In **Settings > At Ubuntu startup**, the **Start minimised at login** switch enables or disables automatic startup with the panel icon. The **blue ?** button explains background history tracking. This setting applies to future logins and does not stop current tracking. The icon uses
 StatusNotifierItem; your panel must support application indicators. If the
 panel does not display it, monitoring can continue and `openink` still opens
 the window. A powered-off computer or closed session cannot deliver notifications.
@@ -249,6 +253,7 @@ firmware backup somewhere safe.
 ```bash
 python3 -m unittest discover -s linux/tests -v
 python3 linux/tests/check_i18n.py
+python3 linux/tests/check_appearance.py
 python3 linux/tests/check_interface.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 python3 linux/build_deb.py
@@ -269,7 +274,7 @@ Firmware assets are pinned and included; historical reverse-engineering tools
 needed to reconstruct the firmware are outside this repository. The hardware
 image is unchanged in this software update.
 
-See [validation notes](docs/OPENINK_1.6.md), [architecture](docs/ARCHITECTURE.md)
+See [validation notes](docs/OPENINK_1.7.md), [architecture](docs/ARCHITECTURE.md)
 and [contribution conventions](CONTRIBUTING.md).
 
 ## Troubleshooting

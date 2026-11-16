@@ -58,6 +58,8 @@ def main():
                     app.render();root.update_idletasks()
                     path=output/f'openink-{language}-{name}.png';capture(app.canvas,path)
                     print(path)
+                app.save_theme('dark');app.notice='';app.render();root.update()
+                path=output/f'openink-{language}-settings-dark.png';capture(app.canvas,path);print(path)
         finally:
             if app:app.close()
             else:store.close();root.destroy()

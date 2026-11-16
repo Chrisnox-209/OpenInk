@@ -7,7 +7,7 @@
 <p align="center">Seguimiento indicativo de tinta, notificaciones Ubuntu y firmware OpenFlow para Epson XP-2200.</p>
 
 <p align="center">
-  <img alt="Versión 1.6.0" src="https://img.shields.io/badge/version-1.6.0-795CF5">
+  <img alt="Versión 1.7.0" src="https://img.shields.io/badge/version-1.7.0-795CF5">
   <img alt="Ubuntu amd64" src="https://img.shields.io/badge/plataforma-Ubuntu_amd64-E95420">
   <img alt="Python 3.10 o posterior" src="https://img.shields.io/badge/Python-%E2%89%A5_3.10-3776AB">
   <img alt="Tkinter" src="https://img.shields.io/badge/interfaz-Tkinter-00B7E8">
@@ -78,13 +78,13 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ### Paquete Ubuntu listo para instalar
 
-Descarga `openink_1.6.0_amd64.deb` y `SHA256SUMS` desde
-[Releases](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.6.0) en la
+Descarga `openink_1.7.0_amd64.deb` y `SHA256SUMS` desde
+[Releases](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0) en la
 misma carpeta. Cierra la ventana anterior, abre un terminal en esa carpeta y ejecuta:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./openink_1.6.0_amd64.deb
+sudo apt install ./openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -100,7 +100,7 @@ git clone https://github.com/Chrisnox-209/OpenInk.git
 cd OpenInk
 sudo apt install dpkg-dev desktop-file-utils
 python3 linux/build_deb.py
-sudo apt install ./linux/dist/openink_1.6.0_amd64.deb
+sudo apt install ./linux/dist/openink_1.7.0_amd64.deb
 openink
 ```
 
@@ -125,7 +125,7 @@ no instala dependencias ni reglas USB.
 ## Idiomas
 
 El francés sigue siendo el README principal del repositorio. En
-**Ajustes > Idioma de la interfaz** puedes elegir **Français**, **English**,
+**Ajustes > Apariencia > Idioma de la interfaz** puedes elegir **Français**, **English**,
 **Español** o el idioma del sistema. La preferencia se guarda y la ventana
 se actualiza al instante. El menú del panel, las notificaciones y la página
 de prueba siguen esa elección. Los contadores, perfiles e historiales se conservan.
@@ -138,6 +138,10 @@ openink --lang es
 
 ![Ajustes y selector de idioma en español](docs/images/openink-es-settings.png)
 
+El recuadro **Apariencia** también permite elegir **Claro** u **Oscuro**. El tema oscuro utiliza grises antracita inspirados en Discord en las cinco vistas, menús, campos y diálogos. El cambio es inmediato y se conserva para el próximo inicio.
+
+![Ajustes con tema oscuro antracita](docs/images/openink-es-settings-dark.png)
+
 ## Icono del panel e inicio automático
 
 Al iniciar la sesión, OpenInk se ejecuta **sin abrir una ventana**, con el
@@ -147,7 +151,7 @@ y las notificaciones. El menú muestra el estado y los contadores, permite
 actualizar y ofrece **Salir y detener el seguimiento**. Detener el seguimiento
 no interrumpe un proceso de programación de firmware.
 
-Configura el inicio en **Ajustes > Iniciar en modo icono al entrar en la sesión**.
+En **Ajustes > Al iniciar Ubuntu**, el interruptor **Iniciar minimizado al entrar en la sesión** activa o desactiva el inicio automático con el icono del panel. El botón **? azul** explica el historial en segundo plano. Este ajuste se aplica a las próximas sesiones y no detiene el seguimiento actual.
 El icono utiliza StatusNotifierItem; el panel debe admitir indicadores de
 aplicaciones. Si no lo muestra, el seguimiento puede continuar y `openink`
 sigue abriendo la ventana. Un equipo apagado o una sesión cerrada no pueden
@@ -259,6 +263,7 @@ Guarda la copia de firmware en un lugar seguro.
 ```bash
 python3 -m unittest discover -s linux/tests -v
 python3 linux/tests/check_i18n.py
+python3 linux/tests/check_appearance.py
 python3 linux/tests/check_interface.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 python3 linux/build_deb.py
@@ -280,7 +285,7 @@ La imagen de firmware está incluida y fijada por sus huellas. Las herramientas
 históricas de ingeniería inversa necesarias para reconstruirla no forman
 parte del repositorio. Esta actualización del software no cambia esa imagen.
 
-Consulta las [notas de validación](docs/OPENINK_1.6.md), la
+Consulta las [notas de validación](docs/OPENINK_1.7.md), la
 [arquitectura](docs/ARCHITECTURE.md) y las [convenciones de contribución](CONTRIBUTING.md).
 
 ## Solución de problemas

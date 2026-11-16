@@ -29,6 +29,7 @@ Pour les modifications d’interface, utiliser les contrôles graphiques isolés
 ```bash
 python3 linux/tests/check_interface.py
 python3 linux/tests/check_i18n.py
+python3 linux/tests/check_appearance.py
 dbus-run-session -- python3 linux/tests/check_tray.py
 ```
 
@@ -50,8 +51,9 @@ python3 linux/tests/capture_readme.py
 ```
 
 La capture nécessite un affichage X11/XWayland et `xwd` (`x11-apps`). Elle lit
-uniquement la fenêtre de test, pas le bureau. Vérifier visuellement les neuf
-images produites avant de les publier.
+uniquement la fenêtre de test, pas le bureau. Vérifier visuellement les
+images produites avant de les publier : trois vues claires et les réglages
+sombres par langue, soit douze illustrations.
 
 ## Style des commits
 

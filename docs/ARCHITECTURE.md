@@ -7,6 +7,8 @@
 - `i18n.py`, `locales/`, `widgets.py` : préférence de langue, catalogues anglais
   et espagnol, présentation traduite sans modifier les valeurs internes des
   formulaires ou des données. Les processus de session relisent cette préférence.
+- `theme.py` : palette claire ou anthracite, limitée à la présentation. Le choix
+  enregistré est appliqué aux dessins Canvas, contrôles Tk/ttk et dialogues.
 - `printer.py`, `usb.py`, `diagnostics.py` : lectures d’état, transports et
   interprétation des erreurs signalées par couleur.
 - `store.py` : SQLite, observations, profils, consommation, réserve et alertes.
@@ -53,6 +55,6 @@ historique n’est nécessaire pour ces deux constructions.
 Pillow, Poppler et Lato. Les ressources déjà incluses suffisent à utiliser et
 construire l’application.
 
-`linux/tests/capture_readme.py` produit les neuf illustrations localisées à
+`linux/tests/capture_readme.py` produit les douze illustrations localisées à
 partir de données isolées. Il ne lit pas l’imprimante ni la base utilisateur.
 Les lanceurs publics n’exposent aucun mode démonstration.
