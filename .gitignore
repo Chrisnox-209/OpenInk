@@ -1,0 +1,39 @@
+# Local Python files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build outputs and local checks
+/linux/dist/
+/linux/captures/
+/output/
+/tmp/
+*.deb
+*.log
+*.ps
+
+# User databases, settings, backups and secrets
+*.sqlite*
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+*.pem
+*.key
+/backups/
+/diagnostic/
+/Reprise-Windows/
+*.zip
+*.exe
+*.rcx
+
+# Editor and desktop metadata
+.idea/
+.vscode/
+.DS_Store
+*~
