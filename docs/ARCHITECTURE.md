@@ -9,6 +9,8 @@
 - `store.py` : SQLite, observations, profils, consommation, réserve et alertes.
 - `agent.py`, `service.py`, `notifications.py` : processus de session, singleton,
   IPC local et notifications natives.
+- `tray.py` : indicateur StatusNotifierItem et menu DBusMenu, distinct de Tk et
+  du lecteur matériel ; il ouvre l’application ou affiche les compteurs de l’agent.
 - `printing.py`, `print_ui.py` : choix de file CUPS, validation, aperçu et envoi
   explicite d’une seule page PDF.
 - `firmware.py`, `firmware_usb.py`, `flash_worker.py`, `firmware_ui.py` : image

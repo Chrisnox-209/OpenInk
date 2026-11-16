@@ -14,6 +14,7 @@ from .diagnostics import cartridge_diagnostics
 from .reset import capability,request_reset
 from .dialogs import focus_existing,register_dialog,scrollable_content
 from .branding import ASSETS,initial_geometry,active_monitor
+from . import __version__
 
 BG = "#F4F6FB"
 WHITE = "#FFFFFF"
@@ -26,7 +27,7 @@ AMBER = "#B87A17"
 RED = "#BD4D4D"
 INKS = {"black": "#354057", "cyan": "#23B8D4", "magenta": "#E95C99", "yellow": "#EDB936"}
 TINTS = {"black": "#EDF0F5", "cyan": "#E5F8FC", "magenta": "#FDEDF4", "yellow": "#FFF7DF"}
-PAGES = ("Vue d’ensemble", "Cartouches", "Historique", "Réglages", "Firmware V2")
+PAGES = ("Vue d’ensemble", "Cartouches", "Historique", "Réglages", "OpenFlow")
 
 
 def number(value):
@@ -63,7 +64,7 @@ class Application:
         self.startup_var=tk.BooleanVar(value=store.setting('autostart',True))
         self.transport_var=tk.StringVar(value={'network':'Wi-Fi','usb':'USB','auto':'Auto'}.get(store.setting('transport','network'),'Wi-Fi'))
         self.reminder_var=tk.StringVar(value={0:'Rappel : aucun',60:'Rappel : 1 h',240:'Rappel : 4 h'}.get(store.setting('reminder_minutes',0),'Rappel : aucun'))
-        root.title("OpenInk 1.4 bêta · Epson XP-2200" + (" · DÉMONSTRATION" if demo else ""))
+        root.title(f"OpenInk {__version__} · Epson XP-2200" + (" · DÉMONSTRATION" if demo else ""))
         self.monitor_geometry=active_monitor(root)
         monitor_w,monitor_h,monitor_x,monitor_y=self.monitor_geometry
         width,height,min_width,min_height=initial_geometry(monitor_w,monitor_h)
@@ -133,6 +134,7 @@ class Application:
         self.resize_job = self.root.after(70, self.render)
 
     def point(self, x, y):
+        if x>=210:x=210+(x-210)*getattr(self,'content_stretch',1)
         return self.ox+x*self.scale, self.oy+y*self.scale
 
     def rect(self, x, y, w, h, fill, radius=14, outline=None, width=1):
@@ -149,13 +151,14 @@ class Application:
         a,b = self.point(x,y)
         return self.canvas.create_text(a,b,text=value,fill=color,anchor=anchor,
                     font=self.font(size,weight,scaled=True),
-                    width=width*self.scale if width else 0)
+                    width=width*self.scale*(self.content_stretch if x>=210 else 1)if width else 0)
 
     def line(self, x1,y1,x2,y2, color=LINE, width=1):
         return self.canvas.create_line(*self.point(x1,y1),*self.point(x2,y2),fill=color,width=width*self.scale)
 
     def circle(self,x,y,r,color,outline=None,width=1):
-        return self.canvas.create_oval(*self.point(x-r,y-r),*self.point(x+r,y+r),
+        cx,cy=self.point(x,y);radius=r*self.scale
+        return self.canvas.create_oval(cx-radius,cy-radius,cx+radius,cy+radius,
                     fill=color,outline=outline or color,width=width*self.scale)
 
     def button(self,x,y,w,h,label,callback,primary=False,subtle=False,icon=None):
@@ -219,7 +222,8 @@ class Application:
         w=max(self.canvas.winfo_width(),1)
         h=max(self.canvas.winfo_height(),1)
         self.scale=min(w/1280,h/850)
-        self.ox=(w-1280*self.scale)/2
+        self.content_stretch=max(1,(w/self.scale-210)/1070)
+        self.ox=0
         self.oy=(h-850*self.scale)/2
         native_font=self.font(11,scaled=True)
         self.root.option_add('*Font',native_font)
@@ -232,7 +236,7 @@ class Application:
         self.canvas.create_rectangle(0,0,w,h,fill=BG,outline=BG)
         self.actions=[]
         self.focus_action=-1
-        self.rect(0,0,210,850,NAV,0)
+        self.canvas.create_rectangle(0,0,210*self.scale,h,fill=NAV,outline=NAV,tags='sidebar-background')
         self.canvas.create_image(*self.point(24,25),image=self.brand_image(),anchor='nw')
         self.text(72,46,"OpenInk",23,WHITE,"bold")
         self.text(29,87,"L’ENCRE, EN TOUTE CLARTÉ",8,"#8C98B0","bold")
@@ -259,14 +263,14 @@ class Application:
         self.text(33,746,"Epson XP-2200",12,WHITE,"bold")
         connection='USB · XP-2200' if self.snapshot and self.snapshot.transport=='USB' else 'Wi-Fi · '+self.host
         self.text(33,769,connection,8,"#9FAAC0")
-        self.text(29,822,"OpenInk  /  v1.4 bêta",8,"#8390AA")
+        self.text(29,822,f"OpenInk  /  v{__version__}",8,"#8390AA")
         self.text(247,42,"ESPACE IMPRIMANTE   /   "+PAGES[self.page].upper(),8,MUTED,"bold")
         self.text(246,85,PAGES[self.page],27,INK,"bold")
         captions=("Un regard sur votre imprimante. Le contrôle sur votre encre.",
                   "Un suivi indépendant pour chacune de vos quatre couleurs.",
                   "Les impressions et les remplissages, au fil du temps.",
                   "Une connexion locale. Des estimations à votre mesure.",
-                  "Installer la V2 et conserver une estimation indépendante de l’encre.")
+                  "OpenFlow : un firmware, un suivi indépendant de l’encre.")
         self.text(247,117,captions[self.page],11,MUTED)
         from .firmware_ui import operation
         from .firmware import SAFE_PHASES
@@ -450,8 +454,8 @@ class Application:
             self.button(1038,y-16,177,32,"Ajuster le suivi",lambda c=color:self.reset_dialog(c))
         self.rect(246,662,997,135,"#EDE9FF",14)
         self.text(269,689,"V2 : contournement global, suivi par couleur",13,"#6753B4","bold")
-        self.text(269,722,"Installe la V2 depuis Firmware V2. Après un remplissage, mets à jour uniquement les niveaux concernés. Un flash sans ajout d’encre conserve l’estimation.",10,"#7D719D",width=700)
-        self.button(1013,727,206,35,"Ouvrir Firmware V2",lambda:self.navigate(4))
+        self.text(269,722,"OpenFlow s’installe une seule fois. Après un remplissage, mets à jour les niveaux concernés. Un flash sans ajout d’encre conserve l’estimation.",10,"#7D719D",width=700)
+        self.button(1013,727,206,35,"Ouvrir OpenFlow",lambda:self.navigate(4))
         self.text(269,777,"V2 ne réécrit pas les puces. Le reset matériel sélectif reste distinct du suivi indicatif.",9,"#7D719D")
 
     def history_page(self):
@@ -475,7 +479,7 @@ class Application:
         widget=tk.Entry(self.canvas,textvariable=variable,relief="flat",bg=WHITE,fg=INK,
                         insertbackground=PURPLE,highlightthickness=1,highlightbackground=LINE,
                         highlightcolor=PURPLE,font=self.font(12,scaled=True))
-        self.canvas.create_window(*self.point(x,y),anchor="nw",window=widget,width=w*self.scale,height=38*self.scale)
+        self.canvas.create_window(*self.point(x,y),anchor="nw",window=widget,width=w*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(widget)
         return widget
 
@@ -485,14 +489,14 @@ class Application:
         self.text(270,214,"Adresse IPv4 de l’Epson sur votre réseau local",10,MUTED)
         self.entry(270,231,325,self.host_var)
         combo=ttk.Combobox(self.canvas,textvariable=self.transport_var,state='readonly',values=('Wi-Fi','USB','Auto'))
-        self.canvas.create_window(*self.point(611,231),anchor='nw',window=combo,width=173*self.scale,height=38*self.scale)
+        self.canvas.create_window(*self.point(611,231),anchor='nw',window=combo,width=173*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(combo)
         self.button(807,231,204,38,"Enregistrer et connecter",self.save_connection)
         self.rect(246,303,997,139,WHITE,14,LINE)
         self.text(270,331,"Estimer selon votre usage",16,INK,"bold")
         combo=ttk.Combobox(self.canvas,textvariable=self.coverage_var,state="readonly",
                           values=("Documents courants","Documents chargés","Photos / aplats"))
-        self.canvas.create_window(*self.point(270,352),anchor="nw",window=combo,width=514*self.scale,height=38*self.scale)
+        self.canvas.create_window(*self.point(270,352),anchor="nw",window=combo,width=514*self.scale*self.content_stretch,height=38*self.scale)
         self.widgets.append(combo)
         self.button(807,352,204,38,"Appliquer cet usage",self.save_coverage)
         self.text(270,418,"La consommation déjà enregistrée reste acquise. Les nouvelles pages utilisent le nouvel usage.",9,MUTED,width=930)
@@ -506,18 +510,18 @@ class Application:
         self.text(270,596,"30 % : préparer le remplacement. 20 % : réserve atteinte. Seuils indicatifs et réglables.",9,MUTED)
         check=ttk.Checkbutton(self.canvas,text="Notifications sur le bureau, même fenêtre fermée",
                               variable=self.notifications_var,command=self.save_safety)
-        self.canvas.create_window(*self.point(263,613),anchor="nw",window=check,width=690*self.scale,height=42*self.scale)
+        self.canvas.create_window(*self.point(263,613),anchor="nw",window=check,width=690*self.scale*self.content_stretch,height=42*self.scale)
         self.widgets.append(check)
         reminder=ttk.Combobox(self.canvas,textvariable=self.reminder_var,state='readonly',values=('Rappel : aucun','Rappel : 1 h','Rappel : 4 h'))
         reminder.bind('<<ComboboxSelected>>',lambda _:self.save_safety())
-        self.canvas.create_window(*self.point(975,618),anchor='nw',window=reminder,width=245*self.scale,height=32*self.scale)
+        self.canvas.create_window(*self.point(975,618),anchor='nw',window=reminder,width=245*self.scale*self.content_stretch,height=32*self.scale)
         self.widgets.append(reminder)
         self.rect(246,686,997,110,WHITE,14,LINE)
         self.text(270,714,"Surveillance de session",15,INK,"bold")
-        self.text(270,742,"Fermer la fenêtre conserve le suivi. L’agent s’arrête avec la session.",9,MUTED,width=680)
-        checkbox=ttk.Checkbutton(self.canvas,text='Démarrer la surveillance à la connexion',variable=self.startup_var,
+        self.text(270,742,"Fermer la fenêtre conserve l’icône et le suivi dans le panneau.",9,MUTED,width=680)
+        checkbox=ttk.Checkbutton(self.canvas,text='Démarrer en mode icône à la connexion',variable=self.startup_var,
                                  command=lambda:self.store.set_setting('autostart',self.startup_var.get()))
-        self.canvas.create_window(*self.point(263,750),anchor='nw',window=checkbox,width=650*self.scale,height=42*self.scale)
+        self.canvas.create_window(*self.point(263,750),anchor='nw',window=checkbox,width=650*self.scale*self.content_stretch,height=42*self.scale)
         self.widgets.append(checkbox)
         self.button(997,728,222,37,"Quitter et arrêter le suivi",self.stop_and_quit)
 
@@ -763,6 +767,9 @@ class Application:
         if self.window_lock and self.window_lock.path.exists():
             self.window_lock.path.unlink(missing_ok=True)
             self.root.deiconify();self.root.lift();self.root.focus_force()
+        if self.window_lock and self.window_lock.quit_path.exists():
+            self.window_lock.quit_path.unlink(missing_ok=True)
+            self.close();return
         if self.managed and not self.service_polling and time.monotonic()-self.last_service_poll>=2:
             self.service_refresh(False)
         self.root.after(100,self.poll)
@@ -792,9 +799,8 @@ class Application:
 
     def stop_and_quit(self):
         if self.managed:
-            from .service import request
-            try:request(self.store.path,'stop')
-            except (OSError,ValueError):pass
+            from .service import stop_desktop
+            stop_desktop(self.store.path)
         self.close()
 
     def hardware_reset_dialog(self):

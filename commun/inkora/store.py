@@ -214,7 +214,7 @@ class Store:
                 self.db.execute('DELETE FROM ink_alerts WHERE printer=? AND color=?',(snapshot.printer_id,color))
                 self.db.execute("UPDATE notifications SET delivery='superseded' WHERE printer=? AND color=? AND kind='estimate' AND delivery IN ('queued','failed')",(snapshot.printer_id,color))
             detail='; '.join(NAMES[c]+(' : estimation conservée'if item['action']=='keep'else f" : départ déclaré {item['percent']:g} %")for c,item in plan.items())
-            self.event(snapshot.printer_id,'Firmware V2 vérifié · suivi de l’encre',detail or'Estimations conservées.')
+            self.event(snapshot.printer_id,'OpenFlow vérifié · suivi de l’encre',detail or'Estimations conservées.')
             if all(value is not None for value in self.estimates(snapshot).values()):
                 self.db.execute("UPDATE notifications SET delivery='superseded' WHERE printer=? AND kind='tracking' AND delivery IN ('queued','failed')",(snapshot.printer_id,))
         return True
@@ -337,7 +337,7 @@ class Store:
 
     def export(self, printer, path):
         readings = [json.loads(r[0]) for r in self.db.execute("SELECT payload FROM readings WHERE printer=? ORDER BY id", (printer,))]
-        data = {"application": "OpenInk 1.4 beta1", "exported_at": datetime.now(timezone.utc).isoformat(),
+        data = {"application": "OpenInk 1.5", "exported_at": datetime.now(timezone.utc).isoformat(),
                 "printer": printer, "readings": readings, "events": self.events(printer, 100000),
                 "estimation_settings": {"coverage": self.setting("coverage", 1.0),
                     "warning_percent": self.setting("warning_percent", DEFAULT_WARNING),

@@ -22,21 +22,24 @@ def operation(app):
 
 def page(app):
     state=operation(app)
-    app.rect(246,154,997,159,BG,14,LINE)
-    app.text(270,184,'Firmware V2 · installation USB',18,INK,'bold')
+    app.rect(246,154,997,117,BG,14,LINE)
+    app.text(270,184,'OpenFlow · firmware pour XP-2200',18,INK,'bold')
     app.text(1190,184,'USB OBLIGATOIRE',9,PURPLE,'bold',anchor='e')
-    app.text(270,219,'La V2 concerne les quatre couleurs. Elle s’installe une seule fois.',12,INK,'bold')
-    app.text(270,253,'Après un remplissage, mets à jour uniquement les couleurs concernées dans Cartouches. Aucun nouveau flash n’est nécessaire.',11,MUTED,width=880)
-    app.rect(246,331,997,146,'#FFF5E2',14)
-    app.text(270,361,'Les 100 % Epson seront simulés',15,'#A16E19','bold')
-    app.text(270,399,'OpenInk estime l’encre à partir des pages. Photos et nettoyages peuvent consommer davantage : la réserve aide à anticiper le remplissage sans garantir l’absence de désamorçage.',11,'#8B764D',width=900)
-    app.text(270,449,'Préalerte : 30 % · Réserve : 20 % par défaut, modifiables dans Réglages.',10,'#8B764D')
+    app.text(270,219,'Une installation globale. Après remplissage, ajuste seulement les niveaux.',12,INK,'bold')
+    app.text(270,249,'OpenFlow utilise la V2 historique inchangée. Aucun nouveau flash à chaque cartouche.',10,MUTED,width=900)
+    app.rect(246,287,997,190,'#FFF0EE',14,'#F2C2BA')
+    app.circle(284,321,14,'#B93830')
+    app.text(284,322,'!',17,'#FFFFFF','bold',anchor='center')
+    app.text(309,321,'FLASH : RISQUE DE BLOCAGE DE L’APPAREIL',16,'#A52D26','bold')
+    app.text(270,357,'Une interruption peut rendre l’imprimante inutilisable. Lis l’avertissement et conserve la sauvegarde avant toute installation.',11,'#8D4039',width=900)
+    app.text(270,402,'USB DIRECT OBLIGATOIRE · Ne pas imprimer, débrancher ou couper l’alimentation.',10,'#A52D26','bold',width=900)
+    app.text(270,446,'Les 100 % Epson seront simulés. Le suivi OpenInk reste estimatif : réserve à 20 % et préalerte à 30 % par défaut.',10,'#8D4039',width=900)
     app.rect(246,495,997,196,BG,14,LINE)
     app.text(270,525,'Installation et vérification',16,INK,'bold')
     if state:
-        label={'done':'V2 active · contrôle ciblé'if state.get('verification_scope')=='modified_regions_and_boot'else'V2 vérifiée · contrôle complet','restarting':'Détection du redémarrage normal','restarted':'Redémarrage USB reconnu','unchanged':'V2 non installée · programme de départ reconnu','failed_before_update':'Installation non commencée','verification_required':'Vérification nécessaire',
-               'waiting':'Attente après programmation','verifying':'Vérification de la V2','backup':'Sauvegarde avant transfert',
-               'upload':'Transfert du firmware','commit_requested':'Programmation demandée'}.get(state['phase'],'Opération V2')
+        label={'done':'OpenFlow actif · contrôle ciblé'if state.get('verification_scope')=='modified_regions_and_boot'else'OpenFlow vérifié · contrôle complet','restarting':'Détection du redémarrage normal','restarted':'Redémarrage USB reconnu','unchanged':'OpenFlow non installé · programme de départ reconnu','failed_before_update':'Installation non commencée','verification_required':'Vérification nécessaire',
+               'waiting':'Attente après programmation','verifying':'Vérification d’OpenFlow','backup':'Sauvegarde avant transfert',
+               'upload':'Transfert du firmware','commit_requested':'Programmation demandée'}.get(state['phase'],'Opération OpenFlow')
         app.text(270,562,label,12,PURPLE,'bold')
         detail=state.get('detail','')
         app.text(270,590,detail[:235]+('…'if len(detail)>235 else''),10,MUTED,width=880)
@@ -50,11 +53,11 @@ def page(app):
                     if state['phase']=='verification_required'else'Le suivi reprend après une vérification réussie.')
         app.text(270,660,f'Attente minimale restante : {wait//60:02d}:{wait%60:02d}'if wait else after_wait,9,MUTED)
     else:
-        app.text(270,562,'V2 disponible · aucune installation lancée',12,PURPLE,'bold')
+        app.text(270,562,'OpenFlow disponible · aucune installation lancée',12,PURPLE,'bold')
         app.text(270,599,'Sauvegarde avant écriture, détection du redémarrage USB et contrôle ciblé des zones modifiées. Attente longue conservée si le résultat est incertain.',11,MUTED,width=900)
         app.text(270,661,'Aucune page ni aucun nettoyage n’est lancé par cet assistant.',9,MUTED)
     blocked=state and state['phase']not in SAFE_PHASES
-    app.button(246,712,291,44,'Préparer l’installation V2',lambda:wizard(app),primary=True)if not blocked else app.button(246,712,291,44,'Nouvelle installation suspendue',None)
+    app.button(246,712,291,44,'Préparer OpenFlow',lambda:wizard(app),primary=True)if not blocked else app.button(246,712,291,44,'Nouvelle installation suspendue',None)
     if blocked:
         available=not app.demo and not remaining_wait(state)and not hardware_busy()
         app.button(555,712,291,44,'Vérifier l’installation',lambda:verify(app)if available else None,primary=False)if available else app.button(555,712,291,44,'Vérification après attente',None)
@@ -74,9 +77,9 @@ def open_folder(app,identifier):
 def wizard(app):
     if focus_existing(app):return
     if not app.snapshot or not app.online:
-        app.notice='Connecte l’Epson avant de préparer la V2.';app.render();return
+        app.notice='Connecte l’Epson avant de préparer OpenFlow.';app.render();return
     win=register_dialog(app,tk.Toplevel(app.root))
-    win.title('Installer V2 et préparer le suivi · OpenInk');win.configure(bg=BG);win.transient(app.root)
+    win.title('Installer OpenFlow · avertissement de flash');win.configure(bg=BG);win.transient(app.root)
     scale=max(.8,app.scale)
     width=min(round(920*scale),app.monitor_geometry[0]-40)
     height=min(round(940*scale),app.monitor_geometry[1]-80)
@@ -85,7 +88,11 @@ def wizard(app):
     def label(text,size=11,bold=False):
         widget=tk.Label(frame,text=text,bg=BG,fg=INK if bold else MUTED,font=app.font(size,'bold'if bold else'normal',scaled=True),wraplength=round(830*scale),justify='left')
         widget.pack(anchor='w',pady=(0,10));return widget
-    label('Installer V2, puis suivre l’encre réellement présente',18,True)
+    label('Installer OpenFlow, puis suivre l’encre',18,True)
+    warning=tk.Frame(frame,bg='#FFF0EE',padx=16,pady=14,highlightbackground='#F2C2BA',highlightthickness=1)
+    warning.pack(fill='x',pady=(0,16))
+    tk.Label(warning,text='⚠ FLASH : L’APPAREIL PEUT DEVENIR INUTILISABLE',bg='#FFF0EE',fg='#A52D26',font=app.font(14,'bold',scaled=True),wraplength=min(round(780*scale),width-100),justify='left').pack(anchor='w',pady=(0,8))
+    tk.Label(warning,text=RISK_NOTICE,bg='#FFF0EE',fg='#8D4039',font=app.font(11,scaled=True),wraplength=min(round(780*scale),width-100),justify='left').pack(anchor='w')
     label('Le flash modifie toute l’imprimante. La sélection ci-dessous concerne uniquement le suivi d’encre : elle ne réécrit pas les puces et ne limite pas le flash à une couleur.')
     label('Connexion directe par câble USB obligatoire. Le Wi-Fi sert au suivi, jamais au flash.',11,True)
     estimates=app.store.estimates(app.snapshot)
@@ -117,12 +124,10 @@ def wizard(app):
     added=tk.BooleanVar(value=False);risk=tk.BooleanVar(value=False);usb=tk.BooleanVar(value=False)
     ttk.Checkbutton(frame,text='Les couleurs déclarées pleines ont réellement été remplies ou remplacées.',variable=added).pack(anchor='w',pady=5)
     label('Sans ajout d’encre, conserve l’estimation. Une couleur inconnue doit recevoir un niveau de départ saisi : OpenInk ne la supposera jamais pleine.',10)
-    label('Avertissement avant flash',12,True)
-    label(RISK_NOTICE,10)
-    ttk.Checkbutton(frame,text='J’ai lu l’avertissement et j’accepte les risques du flash.',variable=risk).pack(anchor='w',pady=7)
-    ttk.Checkbutton(frame,text='L’Epson est reliée directement par câble USB (obligatoire).',variable=usb).pack(anchor='w',pady=7)
+    ttk.Checkbutton(actions,text='J’ai lu l’avertissement et j’accepte les risques du flash.',variable=risk).pack(anchor='w',pady=4)
+    ttk.Checkbutton(actions,text='L’Epson est reliée directement par câble USB (obligatoire).',variable=usb).pack(anchor='w',pady=4)
     label('Ne pas imprimer, débrancher ni couper l’alimentation avant la fin indiquée. En cas de réponse incertaine, l’attente prudente peut durer quinze minutes.',10)
-    note=tk.StringVar(value='Démonstration : aucune communication matérielle.'if app.demo else'Les niveaux seront mis à jour uniquement après vérification réussie de V2.')
+    note=tk.StringVar(value='Démonstration : aucune communication matérielle.'if app.demo else'Les niveaux seront mis à jour uniquement après vérification réussie d’OpenFlow.')
     tk.Label(actions,textvariable=note,bg=BG,fg='#A16E19',font=app.font(10,scaled=True),wraplength=round(830*scale),justify='left').pack(side='top',anchor='w',pady=(0,8))
     button_row=tk.Frame(actions,bg=BG);button_row.pack(side='bottom',fill='x');actions=button_row
     def dismiss():app.dialog=None;win.destroy()
@@ -142,8 +147,8 @@ def wizard(app):
         except (ValueError,OSError)as exc:note.set(str(exc));return
         app.flash_process=process;app.flash_identifier=identifier;dismiss()
         app.navigate(4)
-        app.notice='Assistant V2 démarré. Les sauvegardes et contrôles précèdent tout transfert.'
-    tk.Button(actions,text='Installer V2 et démarrer le suivi',command=start,bg=PURPLE,fg=BG,relief='flat',padx=18,pady=10).pack(side='right')
+        app.notice='Assistant OpenFlow démarré. Les sauvegardes et contrôles précèdent tout transfert.'
+    tk.Button(actions,text='Installer OpenFlow et démarrer le suivi',command=start,bg='#B93830',fg=BG,relief='flat',padx=18,pady=10).pack(side='right')
     tk.Button(actions,text='Annuler',command=dismiss,bg='#F0F2F7',fg=INK,relief='flat',padx=18,pady=10).pack(side='right',padx=10)
     win.protocol('WM_DELETE_WINDOW',dismiss);win.bind('<Escape>',lambda _:dismiss())
 

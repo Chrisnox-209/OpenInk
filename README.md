@@ -7,16 +7,16 @@
 <p align="center">Suivi indicatif de l’encre et notifications Ubuntu pour Epson XP-2200.</p>
 
 <p align="center">
-  <img alt="Version 1.4.0 beta1" src="https://img.shields.io/badge/version-1.4.0--beta1-795CF5">
+  <img alt="Version 1.5.0" src="https://img.shields.io/badge/version-1.5.0-795CF5">
   <img alt="Plateforme Ubuntu amd64" src="https://img.shields.io/badge/plateforme-Ubuntu_amd64-E95420">
   <img alt="Python 3.10 ou supérieur" src="https://img.shields.io/badge/Python-%E2%89%A5_3.10-3776AB">
   <img alt="Interface Tkinter" src="https://img.shields.io/badge/interface-Tkinter-00B7E8">
 </p>
 
-OpenInk, anciennement Inkora, est une application de bureau avec un agent de
+OpenInk est une application de bureau avec un agent de
 session. Elle présente l’état de l’imprimante, les compteurs de pages, un suivi
 local par couleur et des alertes de réserve. Un assistant séparé permet
-l’installation explicite d’une image V2 épinglée, par **USB uniquement**.
+l’installation explicite d’**OpenFlow**, par **USB uniquement**.
 
 Ce dépôt contient la version **Linux uniquement** : sources, tests, ressources
 graphiques et scripts de construction. Il ne contient ni données utilisateur,
@@ -24,7 +24,7 @@ ni sauvegarde privée d’imprimante, ni outil Windows/macOS, ni firmware de
 récupération ou prototype expérimental. La bibliothèque USB tierce est
 conservée avec ses fichiers et sa licence d’origine.
 
-> **Version bêta, cible limitée à l’Epson XP-2200 / IU05P2.** Le flash peut
+> **Cible limitée à l’Epson XP-2200 / IU05P2.** Le flash peut
 > rendre l’appareil inutilisable. Le suivi de l’encre est une estimation :
 > il ne mesure pas le volume et ne garantit pas l’absence de désamorçage.
 
@@ -39,7 +39,7 @@ conservée avec ses fichiers et sa licence d’origine.
 | Suivi continu | Agent de session utilisable fenêtre fermée et au démarrage de session |
 | Historique | Données locales SQLite et export JSON |
 | Page de test | PDF A4 avec logo OpenInk, aplats CMJN, intensités, textes et traits fins |
-| Firmware V2 | Assistant USB, sauvegarde préalable, intégrité vérifiée, acceptation explicite |
+| Firmware OpenFlow | Assistant USB, sauvegarde préalable, intégrité vérifiée, acceptation explicite |
 | Interface | Logo vectoriel, pourcentages, fenêtre adaptée au moniteur choisi |
 | Démo | Aperçu en mémoire, sans imprimante, impression ou flash |
 
@@ -64,25 +64,22 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ### Télécharger le paquet prêt à installer
 
-La [préversion v1.4.0-beta1](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.4.0-beta1)
+La [version v1.5.0](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.5.0)
 propose le paquet Ubuntu **amd64**, l’archive des sources et `SHA256SUMS`.
 Une connexion GitHub autorisée est nécessaire puisque le dépôt est privé.
 
-Télécharger `openink_1.4.0-beta1_amd64.deb` et `SHA256SUMS` dans le même dossier,
+Télécharger `openink_1.5.0_amd64.deb` et `SHA256SUMS` dans le même dossier,
 fermer l’ancienne application, puis ouvrir un terminal dans ce dossier :
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./openink_1.4.0-beta1_amd64.deb
+sudo apt install ./openink_1.5.0_amd64.deb
 openink
 ```
 
 Poursuivre seulement si le contrôle du paquet affiche `OK`. `--ignore-missing`
 permet de vérifier le paquet même si l’archive des sources n’a pas été téléchargée.
 Le téléchargement et l’installation du logiciel ne lancent aucun flash.
-
-Le nom du fichier téléchargé utilise un tiret pour GitHub ; la version Debian
-interne reste `1.4.0~beta1`.
 
 ### Construire et installer le paquet Ubuntu
 
@@ -91,7 +88,7 @@ git clone git@github.com:Chrisnox-209/OpenInk.git
 cd OpenInk
 sudo apt install dpkg-dev desktop-file-utils
 python3 linux/build_deb.py
-sudo apt install ./linux/dist/openink_1.4.0~beta1_amd64.deb
+sudo apt install ./linux/dist/openink_1.5.0_amd64.deb
 openink
 ```
 
@@ -103,9 +100,23 @@ L’installation ajoute le lanceur **OpenInk**, les notifications de session,
 le démarrage automatique et une règle d’accès USB limitée à la XP-2200 normale
 (`04b8:11b1`). L’usage quotidien se fait **sans sudo**.
 
-Le paquet remplace l’ancien paquet `inkora` et conserve les données. La commande
-`inkora` reste un alias. Mettre à jour l’application ne déclenche aucun flash.
+Les données existantes sont conservées. Mettre à jour l’application ne déclenche aucun flash.
 Une V2 déjà installée n’a pas à être reflashée pour cette mise à jour.
+
+### Mode icône et démarrage automatique
+
+OpenInk démarre à la connexion **sans ouvrir de fenêtre**, avec une icône dans
+le panneau Ubuntu et l’agent de suivi actif. Un clic ou le menu **Ouvrir OpenInk**
+affiche la fenêtre. La fermer conserve l’icône, le suivi et les notifications.
+Le menu indique l’état et les compteurs, propose une actualisation et permet
+de **Quitter et arrêter le suivi**. Ce dernier choix arrête les processus de
+session, sans interrompre un contrôleur de flash.
+
+L’option **Démarrer en mode icône à la connexion** se trouve dans Réglages.
+L’indicateur utilise le protocole StatusNotifierItem. Sous GNOME, le panneau
+doit prendre en charge les indicateurs d’application ; Ubuntu fournit
+habituellement cette intégration. Si le panneau ne l’affiche pas, le suivi
+continue et la commande `openink` ouvre toujours la fenêtre.
 
 ### Lancer sans installer
 
@@ -156,9 +167,9 @@ L’agent peut notifier quand la fenêtre est fermée. L’ordinateur et la sess
 doivent rester actifs ; une session fermée ou un ordinateur éteint ne peuvent
 pas recevoir d’alertes. OpenInk ne pilote pas les voyants de l’imprimante.
 
-## Cartouches, V2 et « reset » : portée exacte
+## OpenFlow, cartouches et « reset » : portée exacte
 
-**V2 modifie globalement le comportement des quatre couleurs. Ce n’est pas un
+**OpenFlow (image V2 historique inchangée) modifie globalement le comportement des quatre couleurs. Ce n’est pas un
 reset sélectif des puces.** La sélection de couleurs dans l’assistant sert à
 déclarer le niveau dans OpenInk, pas à choisir une portion du firmware à flasher.
 
@@ -173,7 +184,7 @@ déclarer le niveau dans OpenInk, pas à choisir une portion du firmware à flas
 Après installation de V2, ajuster le suivi après chaque remplissage suffit :
 **un nouveau flash à chaque cartouche est inutile**.
 
-## Assistant firmware et risques
+## Assistant OpenFlow et risques
 
 Avant toute écriture, l’assistant impose une confirmation générale, une case
 d’acceptation des risques et une confirmation USB, toutes explicites. Il
@@ -206,8 +217,11 @@ Cliquer sur **Page de test**, choisir la file Epson, puis **Voir la page** ou
 une confirmation supplémentaire est demandée. Une seule copie A4 couleur,
 recto seul, est envoyée après clic explicite.
 
-Le bouton refuse l’envoi en démo, pendant une opération firmware, avec un état
-ancien ou non prêt et avec une file occupée. Aucun travail existant n’est
+Le dialogue distingue les files désactivées, privilégie une file disponible
+et demande une confirmation quand son identité ne peut pas être établie.
+L’état est relu au clic pour éviter de dépendre d’une observation ancienne.
+L’envoi reste refusé en démo, pendant une opération firmware, si l’imprimante
+n’est pas prête ou si la file est occupée. Aucun travail existant n’est
 supprimé. Une acceptation par CUPS ne prouve pas encore une sortie papier.
 Le PDF se trouve dans [les ressources](commun/inkora/assets/test-page.pdf) ;
 ce contrôle visuel ne remplace pas le test des buses Epson.
@@ -240,7 +254,7 @@ firmware de l’imprimante. Garder les sauvegardes firmware en lieu sûr.
 ```text
 commun/inkora/             Application, agent, base, UI et accès matériels
   assets/                 Logo SVG, icônes PNG et page de test PDF
-  firmware_assets/        V2 historique compressée et manifeste épinglé
+  firmware_assets/        OpenFlow : image V2 inchangée et manifeste épinglé
   _vendor/                Bibliothèque USB, provenance et licence MIT
 linux/                    Lanceurs et scripts de construction Ubuntu
   tests/                  Tests hors ligne et contrôle graphique en démo
@@ -258,13 +272,14 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONWARNINGS=error::ResourceWarning \
 
 # Contrôle graphique séparé, uniquement en démo ; nécessite un affichage
 python3 linux/tests/check_interface.py
+dbus-run-session -- python3 linux/tests/check_tray.py
 
 # Construction sans installation ni accès matériel
 python3 linux/build_deb.py
 python3 linux/build_linux.py
 ```
 
-Les **90 tests** couvrent le suivi, les réserves, les migrations, les notifications,
+Les **101 tests** couvrent le suivi, les réserves, les migrations, les notifications,
 les dialogues, les soumissions CUPS simulées et les limites du contrôleur firmware.
 Ils ne remplacent pas une validation physique sur chaque appareil.
 
@@ -275,9 +290,9 @@ sudo apt install python3-reportlab poppler-utils fonts-lato
 python3 linux/build_brand_assets.py
 ```
 
-L’image V2 est fournie et contrôlée à l’import/construction ; ce dépôt ne contient
+L’image OpenFlow (V2) est fournie et contrôlée à l’import/construction ; ce dépôt ne contient
 pas les outils de recherche historiques nécessaires à sa reconstruction.
-Voir [la validation et les limites](docs/OPENINK_1.4.md),
+Voir [la validation et les limites](docs/OPENINK_1.5.md),
 [l’architecture](docs/ARCHITECTURE.md) et les
 [conventions de contribution](CONTRIBUTING.md).
 

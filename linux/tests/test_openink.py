@@ -58,7 +58,7 @@ class OpenInkTests(unittest.TestCase):
     def test_test_page_uses_explicit_queue_one_copy_and_reports_acceptance_only(self):
         with patch('inkora.printing.subprocess.run',side_effect=[
             self.response('device for Epson_XP_2200: ipp://192.168.1.55/ipp/print\n'),
-            self.response(),self.response('request id is Epson_XP_2200-56 (1 file(s))')])as run:
+            self.response('printer Epson_XP_2200 is idle. enabled'),self.response(),self.response('request id is Epson_XP_2200-56 (1 file(s))')])as run:
             result=submit_test_page(self.snapshot,'Epson_XP_2200')
         self.assertEqual(run.call_args.args[0][:5],['lp','-d','Epson_XP_2200','-n','1'])
         self.assertFalse(result['printed_verified']);self.assertEqual(result['job_id'],'Epson_XP_2200-56')
@@ -72,13 +72,13 @@ class OpenInkTests(unittest.TestCase):
     def test_unconfirmed_mdns_queue_requires_user_confirmation(self):
         with patch('inkora.printing.subprocess.run',return_value=self.response('device for XP-2200: dnssd://EPSON-XP-2200._ipp._tcp.local/'))as run:
             with self.assertRaisesRegex(ValueError,'Confirme'):submit_test_page(self.snapshot,'XP-2200')
-            self.assertEqual(run.call_count,1)
+            self.assertEqual(run.call_count,2)
 
     def test_busy_queue_and_demo_never_submit_lp(self):
         with patch('inkora.printing.subprocess.run')as run:
             with self.assertRaises(ValueError):submit_test_page(replace(self.snapshot,demo=True),'Epson_XP_2200')
             run.assert_not_called()
-        with patch('inkora.printing.subprocess.run',side_effect=[self.response('device for Epson_XP_2200: ipp://192.168.1.55/ipp/print'),self.response('Epson_XP_2200-55 owner')])as run:
+        with patch('inkora.printing.subprocess.run',side_effect=[self.response('device for Epson_XP_2200: ipp://192.168.1.55/ipp/print'),self.response('printer Epson_XP_2200 is idle. enabled'),self.response('Epson_XP_2200-55 owner')])as run:
             with self.assertRaisesRegex(ValueError,'occupée'):submit_test_page(self.snapshot,'Epson_XP_2200')
             self.assertFalse(any(call.args[0][0]=='lp'for call in run.call_args_list))
 

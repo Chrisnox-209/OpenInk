@@ -73,6 +73,7 @@ class WindowLock:
     def __init__(self,database):
         path,lock=runtime_paths(database)
         self.path=path.with_suffix('.show')
+        self.quit_path=path.with_suffix('.ui-quit')
         self.handle=lock.with_suffix('.ui-lock').open('a+b')
         try:
             fcntl.flock(self.handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -80,5 +81,57 @@ class WindowLock:
             self.path.touch(mode=0o600)
             self.handle.close()
             raise RuntimeError("Une fenêtre OpenInk est déjà ouverte.") from None
+        self.quit_path.unlink(missing_ok=True)
     def close(self):
         self.handle.close()
+
+
+def tray_name(database):
+    path,_=runtime_paths(database)
+    return 'io.github.Chrisnox209.OpenInk.Tray.p'+path.stem
+
+
+def tray_request(database,command='Version'):
+    import gi
+    gi.require_version('Gio','2.0')
+    from gi.repository import Gio,GLib
+    connection=Gio.bus_get_sync(Gio.BusType.SESSION,None)
+    return connection.call_sync(tray_name(database),'/StatusNotifierItem',
+        'io.github.Chrisnox209.OpenInk.Tray',command,None,None,Gio.DBusCallFlags.NONE,1000,None).unpack()
+
+
+def ensure_tray(database):
+    """One session icon per database, without creating a Tk window."""
+    from . import __version__
+    try:previous=tray_request(database)
+    except Exception:previous=None
+    if previous==(__version__,):return True
+    if previous:
+        try:tray_request(database,'Quit')
+        except Exception:return False
+        deadline=time.monotonic()+3
+        while time.monotonic()<deadline:
+            try:tray_request(database)
+            except Exception:break
+            time.sleep(.05)
+        else:return False
+    subprocess.Popen(launch_command(database,'--tray'),env=launch_environment(),
+                     stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+    deadline=time.monotonic()+3
+    while time.monotonic()<deadline:
+        try:
+            if tray_request(database)==(__version__,):return True
+        except Exception:pass
+        time.sleep(.1)
+    return False
+
+
+def stop_desktop(database,stop_icon=True):
+    """Stop UI, monitor and icon; never interrupts a firmware worker."""
+    path,_=runtime_paths(database)
+    path.with_suffix('.ui-quit').touch(mode=0o600)
+    try:request(database,'stop')
+    except (OSError,ValueError):pass
+    if stop_icon:
+        try:tray_request(database,'Quit')
+        except Exception:pass

@@ -56,11 +56,11 @@ class FlashJob:
                 'no_contact_before_uptime':self.monotonic()+COOLDOWN_SECONDS,'boot_id':boot_id()}
 
     def before_update(self):
-        self.emit('upload','Transfert de la V2 ; garder les câbles branchés.',update_mode_attempted=True,
+        self.emit('upload','Transfert d’OpenFlow ; garder les câbles branchés.',update_mode_attempted=True,
                   **self.deadline(),progress=0)
 
     def before_commit(self):
-        self.emit('commit_requested','Image V2 contrôlée ; demande unique de programmation.',commit_attempted=True,
+        self.emit('commit_requested','Image OpenFlow contrôlée ; demande unique de programmation.',commit_attempted=True,
                   **self.deadline(),progress=0)
 
     def progress(self,phase,label,done,total):
@@ -88,13 +88,13 @@ class FlashJob:
         except Exception as exc:
             # Firmware verification has succeeded. A database/ink-ledger issue
             # must not be reported as a failed flash or cause another upload.
-            self.emit('done','V2 vérifiée ; suivi à revoir dans Cartouches : '+str(exc),
+            self.emit('done','OpenFlow vérifié ; suivi à revoir dans Cartouches : '+str(exc),
                       verified=True,levels_applied=False,followup_error=str(exc),snapshot=snapshot.to_dict(),progress=1,
                       no_contact_before=0,no_contact_before_uptime=0,remaining_seconds=0)
             return
         finally:
             if store:store.close()
-        self.emit('done','V2 vérifiée. '+('Estimations à renseigner : '+', '.join(missing)if missing else'Suivi de l’encre prêt.'),
+        self.emit('done','OpenFlow vérifié. '+('Estimations à renseigner : '+', '.join(missing)if missing else'Suivi de l’encre prêt.'),
                   verified=True,levels_applied=True,followup_newly_applied=applied,untracked_colors=missing,
                   snapshot=snapshot.to_dict(),progress=1)
         self.emit('done',self.state['detail'],no_contact_before=0,no_contact_before_uptime=0,remaining_seconds=0)
@@ -106,7 +106,7 @@ class FlashJob:
             if generation!=stable_generation:
                 stable_generation=generation;stable_since=now
             if generation and now-stable_since>=3 and now-start>=10:
-                self.emit('restarted','Redémarrage USB normal détecté. Contrôle ciblé de la V2.',restart_generation=generation)
+                self.emit('restarted','Redémarrage USB normal détecté. Contrôle ciblé d’OpenFlow.',restart_generation=generation)
                 return True
             if now-start-last_update>=5:
                 self.emit('restarting','Détection du redémarrage USB normal ; ne pas débrancher.',
@@ -138,7 +138,7 @@ class FlashJob:
             # racing each other while their agents finish.
             current=current_operation()
             if current and current['phase']not in SAFE_PHASES and current.get('id')!=self.identifier:
-                raise ValueError('Une autre opération V2 est en cours.')
+                raise ValueError('Une autre opération OpenFlow est en cours.')
             backend=self.backend_factory(manifest,payload,self.request['serial'])
             try:
                 if verify_only:
@@ -148,7 +148,7 @@ class FlashJob:
                     baseline=getattr(backend,'verified_baseline','V2')
                     if baseline=='V2':self._save_followup(snapshot)
                     else:
-                        self.emit('unchanged','V2 non installée ; programme '+baseline+' reconnu et intact. Niveaux conservés. Une nouvelle préparation manuelle est possible.',
+                        self.emit('unchanged','OpenFlow non installé ; programme '+baseline+' reconnu et intact. Niveaux conservés. Une nouvelle préparation manuelle est possible.',
                                   verified=False,levels_applied=False,baseline_detected=baseline,snapshot=snapshot.to_dict(),progress=1)
                 else:
                     if self.state.get('update_mode_attempted')or self.state.get('verified'):
@@ -160,19 +160,19 @@ class FlashJob:
                         lambda done,total:self.progress('backup','Sauvegarde intégrale de l’imprimante avant transfert.',done,total))
                     self.emit('checked','Sauvegarde complète et programme de départ reconnus.',backup=backup,progress=1)
                     if backup['baseline']=='V2':
-                        self.emit('verifying','V2 déjà installée : aucun nouveau flash nécessaire.',progress=0)
+                        self.emit('verifying','OpenFlow déjà installé : aucun nouveau flash nécessaire.',progress=0)
                         backend.close()
-                        snapshot=backend.quick_verify(lambda done,total:self.progress('verifying','Contrôle ciblé de la V2 déjà installée.',done,total))
+                        snapshot=backend.quick_verify(lambda done,total:self.progress('verifying','Contrôle ciblé d’OpenFlow déjà installée.',done,total))
                         self.state['verification_scope']=getattr(backend,'verification_scope','modified_regions_and_boot')
                         self._save_followup(snapshot)
                     else:
-                        backend.stage(lambda done,total:self.progress('upload','Transfert V2 ; ne pas débrancher.',done,total),self.before_update)
-                        self.emit('staged','Tampon V2 contrôlé : métadonnées, somme et échantillons.',progress=1)
+                        backend.stage(lambda done,total:self.progress('upload','Transfert OpenFlow ; ne pas débrancher.',done,total),self.before_update)
+                        self.emit('staged','Tampon OpenFlow contrôlé : métadonnées, somme et échantillons.',progress=1)
                         reply=backend.commit(self.before_commit)
                         self.state['commit_reply_hex']=(reply or b'').hex()
                         if reply==b'fl:03:OK;\x0c'and self._await_normal_restart(backend):
                             self.emit('verifying','Redémarrage reconnu. Vérification des secteurs modifiés et du secours.',progress=0)
-                            snapshot=backend.quick_verify(lambda done,total:self.progress('verifying','Contrôle des secteurs V2 modifiés et du secours.',done,total))
+                            snapshot=backend.quick_verify(lambda done,total:self.progress('verifying','Contrôle des secteurs OpenFlow modifiés et du secours.',done,total))
                             self.state['verification_scope']=getattr(backend,'verification_scope','modified_regions_and_boot')
                         else:
                             self.emit('waiting','Redémarrage non confirmé. Attente prudente après programmation.',progress=0,wait_mode='conservative')
@@ -181,8 +181,8 @@ class FlashJob:
                                 self.emit('waiting','Ne pas intervenir : attente de sécurité après programmation.',
                                           remaining_seconds=int(remaining),progress=1-remaining/COOLDOWN_SECONDS)
                                 self.sleep(min(5,remaining))
-                            self.emit('verifying','Attente terminée. Vérification complète du programme V2.',progress=0)
-                            snapshot=backend.verify(lambda done,total:self.progress('verifying','Relecture complète du programme V2.',done,total))
+                            self.emit('verifying','Attente terminée. Vérification complète du programme OpenFlow.',progress=0)
+                            snapshot=backend.verify(lambda done,total:self.progress('verifying','Relecture complète du programme OpenFlow.',done,total))
                             self.state['verification_scope']='full'
                         self._save_followup(snapshot)
             except Exception as exc:

@@ -14,6 +14,10 @@ ENV={**os.environ,'LC_ALL':'C'}
 def cups_printers(snapshot):
     result=subprocess.run(['lpstat','-v'],capture_output=True,text=True,timeout=5,env=ENV)
     if result.returncode:raise ValueError('CUPS ne répond pas : '+result.stderr.strip())
+    states=subprocess.run(['lpstat','-p'],capture_output=True,text=True,timeout=5,env=ENV)
+    if states.returncode:raise ValueError('Impossible de lire l’état des files CUPS : '+states.stderr.strip())
+    disabled={match.group(1)for line in states.stdout.splitlines()
+              if(match:=re.match(r'printer (\S+) disabled\b',line))}
     printers=[]
     for line in result.stdout.splitlines():
         match=re.match(r'device for ([A-Za-z0-9_][A-Za-z0-9_.-]*):\s*(.+)$',line)
@@ -22,11 +26,15 @@ def cups_printers(snapshot):
         if 'mfp-ipl'in(name+' '+uri).lower():continue
         decoded=unquote(uri);model='xp2200'in re.sub('[^a-z0-9]','',(name+' '+decoded).lower())
         parsed=urlsplit(uri);query=parse_qs(parsed.query)
-        serial_match=bool(snapshot.serial and snapshot.serial in query.get('serial',[]))
-        host_match=bool(snapshot.transport!='USB'and parsed.hostname==snapshot.host)
+        serials=set(query.get('serial',[]))
+        for serial in tuple(serials):
+            try:serials.add(bytes.fromhex(serial).decode('ascii'))
+            except (ValueError,UnicodeDecodeError):pass
+        serial_match=bool(snapshot and snapshot.serial and snapshot.serial in serials)
+        host_match=bool(snapshot and snapshot.transport!='USB'and parsed.hostname==snapshot.host)
         confirmed=serial_match or host_match
-        if model or confirmed:printers.append({'name':name,'confirmed':confirmed})
-    return printers
+        if model or confirmed:printers.append({'name':name,'confirmed':confirmed,'enabled':name not in disabled,'uri':uri})
+    return sorted(printers,key=lambda item:(not item['enabled'],not item['confirmed'],item['name']))
 
 
 def submit_test_page(snapshot,queue,confirm_destination=False):
@@ -40,6 +48,8 @@ def submit_test_page(snapshot,queue,confirm_destination=False):
     with hardware_session():
         selected=next((p for p in cups_printers(snapshot)if p['name']==queue),None)
         if not selected:raise ValueError('Cette file Epson n’est plus disponible.')
+        if not selected['enabled']:
+            raise ValueError('Cette file CUPS est désactivée. Choisis une file disponible, ou réactive-la dans les paramètres Imprimantes d’Ubuntu.')
         if not selected['confirmed']and not confirm_destination:
             raise ValueError('Confirme que la file choisie correspond à ton Epson.')
         jobs=subprocess.run(['lpstat','-W','not-completed','-o',queue],capture_output=True,text=True,timeout=5,env=ENV)

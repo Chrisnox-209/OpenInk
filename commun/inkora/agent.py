@@ -92,7 +92,9 @@ class Agent:
                             store.observe(snapshot)
                             store.queue_reminders(snapshot)
                             self.info={"running":True,"online":True,"error":"","last_success":snapshot.observed_at,"pid":os.getpid(),'app_version':__version__,
-                                       "printer_id":snapshot.printer_id,"transport":snapshot.transport}
+                                       "printer_id":snapshot.printer_id,"transport":snapshot.transport,
+                                       'color_pages':snapshot.color_pages,'mono_pages':snapshot.mono_pages,
+                                       'low_colors':[color for color,item in store.estimates(snapshot).items()if item and item['state']in('warning','reserve')]}
                             failures=0
                         except Exception as exc:
                             failures+=1

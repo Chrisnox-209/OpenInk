@@ -28,6 +28,7 @@ Pour les modifications d’interface, utiliser le contrôle en démo :
 
 ```bash
 python3 linux/tests/check_interface.py
+dbus-run-session -- python3 linux/tests/check_tray.py
 ```
 
 Les tests matériels ne doivent pas s’exécuter implicitement dans une suite de

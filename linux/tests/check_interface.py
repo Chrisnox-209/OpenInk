@@ -48,6 +48,9 @@ def main():
                 app.navigate(page)
                 root.update()
                 assert len(app.canvas.find_all()) > 30
+                assert app.ox==0 and app.canvas.coords('sidebar-background')[0]==0
+                assert all('bêta'not in app.canvas.itemcget(item,'text').lower()for item in app.canvas.find_all()if app.canvas.type(item)=='text')
+            assert any('RISQUE DE BLOCAGE'in app.canvas.itemcget(item,'text')for item in app.canvas.find_all()if app.canvas.type(item)=='text')
             original_toplevel=tk.Toplevel
             def hidden_window(parent):
                 win=original_toplevel(parent);win.withdraw();return win
@@ -131,13 +134,41 @@ def main():
                 send=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Imprimer une page')
                 assert str(send.cget('state'))=='disabled'
                 send.invoke();win.destroy();root.update()
+            # Real dialog flow with a disabled USB queue and one available network queue.
+            from dataclasses import replace
+            fake_snapshot=replace(app.snapshot,demo=False)
+            with patch('inkora.print_ui.cups_printers',return_value=[
+                    {'name':'Epson-network','enabled':True,'confirmed':False},
+                    {'name':'Epson-USB-off','enabled':False,'confirmed':True}]), \
+                 patch('inkora.usb.read_connected',return_value=fake_snapshot), \
+                 patch('inkora.print_ui.submit_test_page',return_value={'queue':'Epson-network','job_id':'Epson-network-1'})as submit, \
+                 patch.object(app,'refresh'):
+                app.demo=False
+                try:
+                    show_test_page(app);root.update();win=app.dialog
+                    combo=next(w for w in children(win)if isinstance(w,ttk.Combobox))
+                    deadline=time.monotonic()+3
+                    while not combo.get()and time.monotonic()<deadline:root.update();time.sleep(.01)
+                    assert combo.get()=='Epson-network'
+                    send=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Imprimer une page')
+                    assert str(send.cget('state'))=='disabled'
+                    confirm=next(w for w in children(win)if isinstance(w,ttk.Checkbutton))
+                    confirm.invoke();assert str(send.cget('state'))=='normal';send.invoke()
+                    deadline=time.monotonic()+3
+                    while not submit.called and time.monotonic()<deadline:root.update();time.sleep(.01)
+                    assert submit.call_count==1
+                    assert submit.call_args.args[1:] == ('Epson-network',True)
+                    for _ in range(20):root.update();time.sleep(.01)
+                    assert str(send.cget('state'))=='disabled'
+                    win.destroy();root.update()
+                finally:app.demo=True
             with patch('inkora.firmware_ui.launch_job',side_effect=AssertionError('No firmware worker in demo')):
                 wizard(app);root.update()
                 win=app.dialog
                 frame=win.winfo_children()[0]
                 assert frame.winfo_reqheight()<=win.winfo_height(), 'Firmware dialog clips its content'
                 assert frame.winfo_reqwidth()<=win.winfo_width(), 'Firmware dialog clips its width'
-                start=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Installer V2 et démarrer le suivi')
+                start=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Installer OpenFlow et démarrer le suivi')
                 start.invoke();root.update()
                 assert store.estimates(snapshot)==before
                 cancel=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Annuler')
@@ -158,7 +189,7 @@ def main():
                 next(w for w in checks if 'déclarées pleines'in w.cget('text')).invoke()
                 next(w for w in checks if 'j’accepte les risques'in w.cget('text')).invoke()
                 next(w for w in checks if 'USB (obligatoire)'in w.cget('text')).invoke()
-                start=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Installer V2 et démarrer le suivi')
+                start=next(w for w in children(win)if isinstance(w,tk.Button)and w.cget('text')=='Installer OpenFlow et démarrer le suivi')
                 app.demo=False
                 try:start.invoke()
                 finally:app.demo=True
@@ -185,7 +216,9 @@ def main():
             result['selected_monitor_size']=list(app.monitor_geometry[:2])
             result['risk_and_usb_acknowledgments_in_wizard']=True
             result['demo_test_print_button_disabled_without_cups_io']=True
-            (output/"VALIDATION_INTERFACE_OPENINK_1.4.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n")
+            result['no_left_margin']=True
+            result['print_dialog_selects_enabled_queue_and_submits_once']=True
+            (output/"VALIDATION_INTERFACE_OPENINK_1.5.json").write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n")
             print(json.dumps(result, ensure_ascii=False, indent=2))
     finally:
         if app:

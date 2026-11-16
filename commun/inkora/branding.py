@@ -6,6 +6,7 @@ import subprocess
 import re
 
 APP_NAME='OpenInk'
+FIRMWARE_NAME='OpenFlow'
 ASSETS=Path(__file__).parent/'assets'
 TEST_PAGE=ASSETS/'test-page.pdf'
 RISK_NOTICE_VERSION='openink-flash-2026-11-v1'

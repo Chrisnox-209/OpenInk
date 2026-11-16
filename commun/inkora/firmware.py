@@ -80,7 +80,7 @@ def current_operation():
 def require_monitoring_allowed():
     operation=current_operation()
     if operation and operation['phase']not in SAFE_PHASES:
-        raise ValueError('Suivi suspendu : opération V2 en cours ou installation à vérifier dans Firmware V2.')
+        raise ValueError('Suivi suspendu : opération V2 en cours ou installation à vérifier dans OpenFlow.')
 
 
 def hardware_busy():
@@ -172,7 +172,7 @@ def launch_job(identifier,verify_only=False):
     inhibit=shutil.which('systemd-inhibit')
     if not inhibit:raise ValueError('systemd-inhibit est requis pour empêcher la veille pendant l’installation.')
     command=[inhibit,'--what=sleep:idle','--mode=block','--who=OpenInk',
-             '--why=Installation et vérification du firmware V2 Epson',sys.executable,'-m','inkora','--firmware-job',identifier]
+             '--why=Installation et vérification du firmware OpenFlow Epson',sys.executable,'-m','inkora','--firmware-job',identifier]
     if verify_only:command.append('--verify-firmware')
     folder=job_folder(identifier);log=folder/'worker.log'
     with log.open('ab')as stream:

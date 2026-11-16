@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--transport",choices=("network","usb","auto"),help="Transport de diagnostic")
     parser.add_argument("--agent",action="store_true",help="Agent de surveillance de session")
     parser.add_argument("--background",action="store_true",help="Démarrer le suivi sans fenêtre")
+    parser.add_argument('--tray',action='store_true',help='Icône du panneau, sans fenêtre')
     parser.add_argument("--stop-agent",action="store_true",help="Arrêter le suivi de session")
     parser.add_argument('--firmware-job',help='Exécuter une opération V2 explicitement préparée par l’interface')
     parser.add_argument('--verify-firmware',action='store_true',help='Vérifier seulement une opération V2 existante')
@@ -29,18 +30,22 @@ def main():
     parser.add_argument("--close-after",type=int,help="Fermer après N secondes pour les contrôles de l’interface")
     parser.add_argument('--view',choices=('overview','cartridges','history','settings','firmware'),default='overview',help='Vue affichée au lancement')
     args=parser.parse_args()
-    if args.demo and (args.agent or args.background or args.stop_agent or args.probe or args.firmware_job or args.verify_firmware):
+    if args.demo and (args.agent or args.background or args.tray or args.stop_agent or args.probe or args.firmware_job or args.verify_firmware):
         parser.error("Le mode démo ne communique pas avec le matériel ni avec l’agent réel.")
     if args.verify_firmware and not args.firmware_job:parser.error('--verify-firmware exige une opération existante.')
     if args.firmware_job:
-        if args.agent or args.background or args.stop_agent or args.probe:parser.error('Modes incompatibles avec une opération firmware.')
+        if args.agent or args.background or args.tray or args.stop_agent or args.probe:parser.error('Modes incompatibles avec une opération firmware.')
         from .flash_worker import run_job
         raise SystemExit(run_job(args.firmware_job,args.verify_firmware))
     if args.stop_agent:
-        from .service import request
+        from .service import stop_desktop
         from .store import default_database
-        try:print(json.dumps(request(args.database or default_database(),'stop')))
-        except OSError:print('La surveillance est déjà arrêtée.')
+        stop_desktop(args.database or default_database())
+        return
+    if args.tray:
+        from .tray import run_tray
+        from .store import default_database
+        run_tray(args.database or default_database())
         return
     if args.agent:
         from .agent import run_agent
@@ -60,9 +65,10 @@ def main():
     if not args.demo:
         from .branding import migrate_legacy_shortcut
         migrate_legacy_shortcut()
-        from .service import ensure_agent,WindowLock
+        from .service import ensure_agent,ensure_tray,WindowLock
         if args.background:
-            if store.setting('autostart',True):ensure_agent(store.path)
+            if store.setting('autostart',True):
+                ensure_agent(store.path);ensure_tray(store.path)
             store.close()
             return
         try:window_lock=WindowLock(store.path)
@@ -71,6 +77,7 @@ def main():
             return
         try:ensure_agent(store.path)
         except RuntimeError as exc:print(str(exc),file=sys.stderr)
+        if not ensure_tray(store.path):print('Icône du panneau indisponible ; le suivi reste actif.',file=sys.stderr)
     if args.demo:
         now=datetime.now(timezone.utc)
         base=demo_snapshot()

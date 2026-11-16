@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 
-VERSION='1.4.0~beta1'
+VERSION='1.5.0'
 
 
 def write(root,path,text,mode=0o644):
@@ -47,8 +47,8 @@ Exec=openink --stop-agent
 """)
         write(root,'etc/xdg/autostart/openink-agent.desktop',"""[Desktop Entry]
 Type=Application
-Name=OpenInk - surveillance
-Comment=Suivi de l'encre et notifications de session
+Name=OpenInk - icône et surveillance
+Comment=Démarrer dans le panneau, sans fenêtre, avec suivi des impressions
 Exec=openink --background
 Icon=openink
 Terminal=false
@@ -57,6 +57,10 @@ X-GNOME-Autostart-enabled=true
 """)
         icon=root/'usr/share/icons/hicolor/scalable/apps/openink.svg';icon.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(app/'linux/openink.svg',icon)
+        for size in (64,128,256,512):
+            icon=root/f'usr/share/icons/hicolor/{size}x{size}/apps/openink.png'
+            icon.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(app/f'commun/inkora/assets/openink-{size}.png',icon)
         write(root,'usr/lib/udev/rules.d/70-openink-epson.rules',
               '# Access for the active local user, normal XP-2200 only.\nSUBSYSTEM=="usb", ATTR{idVendor}=="04b8", ATTR{idProduct}=="11b1", TAG+="uaccess"\n')
         docs=root/'usr/share/doc/openink';docs.mkdir(parents=True,exist_ok=True)
@@ -75,9 +79,9 @@ Provides: inkora (= {VERSION})
 Conflicts: inkora
 Replaces: inkora
 Depends: python3 (>= 3.10), python3-tk, python3-pil, python3-gi, gir1.2-glib-2.0, libusb-1.0-0, cups-client, systemd, xdg-utils, x11-xserver-utils
-Description: Firmware V2 et suivi indicatif de l'encre pour Epson XP-2200
+Description: OpenFlow et suivi indicatif de l'encre pour Epson XP-2200
  Application graphique avec agent de session et notifications natives.
- Assistant USB explicite pour la seule V2 historique IU05P2.
+ Assistant OpenFlow USB pour la XP-2200 IU05P2.
  Installation globale et suivi par couleur ; aucune écriture de puce.
  Logo CMJN, page de test et contrôle ciblé des zones modifiées.
 ''')
