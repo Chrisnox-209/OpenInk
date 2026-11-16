@@ -275,7 +275,7 @@ needed to reconstruct the firmware are outside this repository. The hardware
 image is unchanged in this software update.
 
 See [validation notes](docs/OPENINK_1.7.md), [architecture](docs/ARCHITECTURE.md)
-and [contribution conventions](CONTRIBUTING.md).
+and [contribution conventions](CONTRIBUTING.en.md).
 
 ## Troubleshooting
 

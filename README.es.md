@@ -286,7 +286,7 @@ históricas de ingeniería inversa necesarias para reconstruirla no forman
 parte del repositorio. Esta actualización del software no cambia esa imagen.
 
 Consulta las [notas de validación](docs/OPENINK_1.7.md), la
-[arquitectura](docs/ARCHITECTURE.md) y las [convenciones de contribución](CONTRIBUTING.md).
+[arquitectura](docs/ARCHITECTURE.md) y las [convenciones de contribución](CONTRIBUTING.es.md).
 
 ## Solución de problemas
 

@@ -1,5 +1,7 @@
 # Contribuer à OpenInk Linux
 
+**Français** · [English](CONTRIBUTING.en.md) · [Español](CONTRIBUTING.es.md)
+
 ## Périmètre
 
 Ce dépôt contient seulement l’application Linux. Conserver les chemins de
@@ -43,6 +45,7 @@ libellés français à l’affichage. Conserver les paramètres `{p0}`, `{p1}`, 
 et les valeurs canoniques des formulaires : ne jamais traduire les identifiants
 CUPS, les commandes matérielles ou les données persistantes. Le README par
 défaut reste français ; maintenir les guides anglais et espagnol à jour.
+Actualiser aussi les trois versions du présent guide lorsqu’une règle change.
 
 Pour renouveler les illustrations des trois guides, sans accès matériel :
 
