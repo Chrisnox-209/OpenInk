@@ -62,6 +62,25 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
 
 ## Installation
 
+### Télécharger le paquet prêt à installer
+
+La [préversion v1.4.0-beta1](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.4.0-beta1)
+propose le paquet Ubuntu **amd64**, l’archive des sources et `SHA256SUMS`.
+Une connexion GitHub autorisée est nécessaire puisque le dépôt est privé.
+
+Télécharger `openink_1.4.0~beta1_amd64.deb` et `SHA256SUMS` dans le même dossier,
+fermer l’ancienne application, puis ouvrir un terminal dans ce dossier :
+
+```bash
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./openink_1.4.0~beta1_amd64.deb
+openink
+```
+
+Poursuivre seulement si le contrôle du paquet affiche `OK`. `--ignore-missing`
+permet de vérifier le paquet même si l’archive des sources n’a pas été téléchargée.
+Le téléchargement et l’installation du logiciel ne lancent aucun flash.
+
 ### Construire et installer le paquet Ubuntu
 
 ```bash
