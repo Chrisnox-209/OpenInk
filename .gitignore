@@ -37,3 +37,14 @@ htmlcov/
 .vscode/
 .DS_Store
 *~
+
+# Windows build and visual checks
+/windows/build/
+/windows/dist/
+/windows/captures/
+
+# macOS build and visual checks
+/macos/build/
+/macos/dist/
+/macos/captures/
+/.venv-macos/

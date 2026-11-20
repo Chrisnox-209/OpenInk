@@ -3,6 +3,7 @@ from datetime import datetime,timezone
 import os
 import re
 import subprocess
+import sys
 from urllib.parse import urlsplit,parse_qs,unquote
 
 from .branding import TEST_PAGE
@@ -58,9 +59,14 @@ def submit_test_page(snapshot,queue,confirm_destination=False):
         if jobs.returncode or jobs.stdout.strip():raise ValueError('Cette file est occupée. Attends la fin du document en cours.')
         # No shell, no default queue, one copy, no duplex or implicit reprint.
         result=subprocess.run(['lp','-d',queue,'-n','1','-t',tr('OpenInk - page de test CMJN'),
-             '-o','media=A4','-o','sides=one-sided','-o','print-color-mode=color',str(page)],
+             '-o','media=A4','-o','sides=one-sided','-o','print-color-mode=color',
+             *(['-o','ColorModel=RGB'] if sys.platform == 'darwin' else []),str(page)],
              capture_output=True,text=True,timeout=15,env=ENV)
         if result.returncode:raise ValueError('Envoi refusé par CUPS : '+result.stderr.strip())
         match=re.search(r'request id is ([A-Za-z0-9_.-]+-\d+)',result.stdout)
         return {'accepted':True,'job_id':match.group(1)if match else None,'queue':queue,
                 'printed_verified':False,'copies':1}
+
+
+if os.name == 'nt':
+    from .windows_printing import cups_printers, submit_test_page

@@ -72,7 +72,7 @@ X-GNOME-Autostart-enabled=true
         write(root,'usr/lib/udev/rules.d/70-openink-epson.rules',
               '# Access for the active local user, normal XP-2200 only.\nSUBSYSTEM=="usb", ATTR{idVendor}=="04b8", ATTR{idProduct}=="11b1", TAG+="uaccess"\n')
         docs=root/'usr/share/doc/openink';docs.mkdir(parents=True,exist_ok=True)
-        for source in [*sorted(app.glob('README*.md')),app/'THIRD_PARTY_NOTICES.md',*sorted(app.glob('CONTRIBUTING*.md')),*sorted(p for p in (app/'docs').rglob('*') if p.is_file())]:
+        for source in [*sorted(app.glob('README*.md')),app/'DISCLAIMER.md',app/'THIRD_PARTY_NOTICES.md',*sorted(app.glob('CONTRIBUTING*.md')),*sorted(p for p in (app/'docs').rglob('*') if p.is_file())]:
             if source.exists():
                 destination=docs/source.relative_to(app)
                 destination.parent.mkdir(parents=True,exist_ok=True)

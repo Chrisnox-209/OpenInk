@@ -1,0 +1,8 @@
+Pillow==13.0.0
+pystray==0.19.5
+pyobjc-core==13.0
+pyobjc-framework-Cocoa==13.0
+pyobjc-framework-Quartz==13.0
+libusb-package==1.0.30.1
+PyInstaller==6.22.3
+macholib==1.16.4

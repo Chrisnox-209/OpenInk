@@ -4,6 +4,7 @@ import ipaddress
 import queue
 import threading
 import time
+import sys
 from .widgets import tk,ttk,Switch
 from tkinter import filedialog
 
@@ -588,6 +589,18 @@ class Application:
         self.apply_theme_style();self.notice='Thème enregistré.';self.render()
 
     def save_startup(self):
+        if sys.platform == 'darwin':
+            from .macos_support import set_autostart
+            try:set_autostart(self.store.path,self.startup_var.get())
+            except OSError as exc:
+                self.startup_var.set(self.store.setting('autostart',False))
+                self.notice=str(exc);self.render();return
+        elif __import__('os').name == 'nt':
+            from .windows_desktop import set_autostart
+            try:set_autostart(self.store.path,self.startup_var.get())
+            except OSError as exc:
+                self.startup_var.set(self.store.setting('autostart',False))
+                self.notice=str(exc);self.render();return
         self.store.set_setting('autostart',self.startup_var.get())
         self.notice='Démarrage minimisé activé.'if self.startup_var.get()else'Démarrage automatique désactivé pour les prochaines connexions.'
         self.render()

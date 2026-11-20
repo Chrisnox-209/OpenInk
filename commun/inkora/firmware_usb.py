@@ -4,6 +4,8 @@ Uses the locally recorded normal-mode protocol. No arbitrary images, memory
 writes, cartridge EEPROM writes, recovery-mode updates or warning prototype.
 """
 import hashlib
+import os
+import sys
 import struct
 import subprocess
 import time
@@ -21,24 +23,26 @@ MAIN_SIZE=0xC60000
 
 def normal_usb_generation(serial,root=Path('/sys/bus/usb/devices'),physical_port=None):
     """Passive kernel attributes only: no USB handle/control request while waiting."""
+    if os.name == 'nt' or sys.platform == 'darwin':return None  # No proven passive generation identifier on Windows.
     found=[]
     for node in root.glob('*'):
         try:
-            if(node/'idVendor').read_text().strip()!='04b8'or(node/'idProduct').read_text().strip()!='11b1':continue
+            if(node/'idVendor').read_text(encoding='utf-8').strip()!='04b8'or(node/'idProduct').read_text(encoding='utf-8').strip()!='11b1':continue
             if physical_port:
                 if node.name!=physical_port:continue
-            elif(node/'serial').read_text().strip()!=serial:continue
-            found.append(f"{int((node/'busnum').read_text())}:{int((node/'devnum').read_text())}")
+            elif(node/'serial').read_text(encoding='utf-8').strip()!=serial:continue
+            found.append(f"{int((node/'busnum').read_text(encoding='utf-8'))}:{int((node/'devnum').read_text(encoding='utf-8'))}")
         except (OSError,ValueError):continue
     return found[0]if len(found)==1 else None
 
 
 def normal_usb_port(device,root=Path('/sys/bus/usb/devices')):
+    if os.name == 'nt' or sys.platform == 'darwin':return None
     if not device:return None
     for node in root.glob('*'):
         try:
-            if(node/'idVendor').read_text().strip()!='04b8'or(node/'idProduct').read_text().strip()!='11b1':continue
-            generation=f"{int((node/'busnum').read_text())}:{int((node/'devnum').read_text())}"
+            if(node/'idVendor').read_text(encoding='utf-8').strip()!='04b8'or(node/'idProduct').read_text(encoding='utf-8').strip()!='11b1':continue
+            generation=f"{int((node/'busnum').read_text(encoding='utf-8'))}:{int((node/'devnum').read_text(encoding='utf-8'))}"
             if generation==device:return node.name
         except (OSError,ValueError):continue
     return None
@@ -49,12 +53,18 @@ def require(condition,message):
 
 
 def require_empty_queues():
+    if os.name == 'nt':
+        from .windows_printing import require_empty_queues as windows_check
+        return windows_check()
     result=subprocess.run(['lpstat','-W','not-completed','-o'],capture_output=True,text=True,timeout=5)
     require(result.returncode==0 and not result.stdout.strip(),
             'Une file est active ou CUPS ne répond pas. Aucun travail ne sera supprimé.')
 
 
 def normal_usb_device():
+    if os.name == 'nt':
+        from .windows_usb import normal_usb_device as windows_device
+        return windows_device()
     from epson_usb.backends import find_devices
     devices=[d for d in find_devices(backend='libusb')if d.vendor_id==0x04b8]
     normal={d.path for d in devices if d.product_id==0x11b1}
@@ -83,8 +93,11 @@ class V2Usb:
         self.staged=False
 
     def open(self):
+        if sys.platform == 'darwin':
+            from .macos_support import configure_libusb
+            configure_libusb(required=True)
         require_empty_queues();self.device=normal_usb_device()
-        self.printer=EpsonUsbPrinter(read_key=(75,54),write_key=None,dry_run=True,backend='libusb',device=self.device,interface=1)
+        self.printer=EpsonUsbPrinter(read_key=(75,54),write_key=None,dry_run=True,backend='usbprint' if os.name == 'nt' else 'libusb',device=self.device,interface=1)
         return self.identity()
 
     def close(self,protocol=True):

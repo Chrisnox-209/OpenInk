@@ -1,6 +1,8 @@
 """V2 installation and physical ink declarations. Demo never starts a worker."""
 import json
 import subprocess
+import os
+import sys
 from .widgets import tk,ttk
 
 from .firmware import (SAFE_PHASES,current_operation,hardware_busy,job_folder,launch_job,prepare_job,
@@ -71,7 +73,8 @@ def page(app):
 
 def open_folder(app,identifier):
     if app.demo:return
-    subprocess.Popen(['xdg-open',str(job_folder(identifier))],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    if os.name == 'nt':os.startfile(str(job_folder(identifier)))
+    else:subprocess.Popen(['/usr/bin/open' if sys.platform == 'darwin' else 'xdg-open',str(job_folder(identifier))],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 
 
 def wizard(app):

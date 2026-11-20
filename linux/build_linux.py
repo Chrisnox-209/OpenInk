@@ -12,7 +12,7 @@ def main():
     destination=root/"linux/dist"
     destination.mkdir(exist_ok=True)
     files=sorted(p for p in (root/"commun/inkora").rglob('*') if p.is_file()and'__pycache__'not in p.parts and p.suffix!='.pyc')
-    files += [*sorted(root.glob("README*.md")),root/'THIRD_PARTY_NOTICES.md',*sorted(root.glob('CONTRIBUTING*.md'))]
+    files += [*sorted(root.glob("README*.md")),root/'DISCLAIMER.md',root/'THIRD_PARTY_NOTICES.md',*sorted(root.glob('CONTRIBUTING*.md'))]
     files += sorted(p for p in (root/'docs').rglob('*') if p.is_file())
     files += [root/"linux"/name for name in ("inkora_linux.py","openink_linux.py","Lancer-Inkora.sh","Lancer-OpenInk.sh","installer_raccourci.py","openink.svg","build_deb.py","build_linux.py","build_brand_assets.py")]
     files += sorted(p for p in (root/'linux/tests').rglob('*') if p.is_file()and'__pycache__'not in p.parts and p.suffix!='.pyc')

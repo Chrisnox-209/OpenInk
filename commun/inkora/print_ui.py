@@ -1,5 +1,7 @@
 """Explicit, one-page CMYK test with preview and destination selection."""
 import subprocess
+import os
+import sys
 import queue
 import threading
 import sqlite3
@@ -31,7 +33,9 @@ def show(app):
     tk.Label(buttons,textvariable=note,bg='white',fg='#A16E19',font=app.font(10,scaled=True),wraplength=round(610*scale),justify='left').pack(side='top',anchor='w',pady=8)
     row=tk.Frame(buttons,bg='white');row.pack(side='bottom',fill='x');buttons=row
     available={};sending=False
-    def preview():subprocess.Popen(['xdg-open',str(test_page())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    def preview():
+        if os.name == 'nt':os.startfile(str(test_page()))
+        else:subprocess.Popen(['/usr/bin/open' if sys.platform == 'darwin' else 'xdg-open',str(test_page())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     def dismiss():win.destroy()
     def background(action,finish):
         results=queue.Queue()

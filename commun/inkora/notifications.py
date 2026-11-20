@@ -79,3 +79,10 @@ def send_notification(title, detail):
         return result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
+
+
+if sys.platform == 'win32':
+    from .windows_desktop import DesktopNotifications
+
+elif sys.platform == 'darwin':
+    from .macos_support import DesktopNotifications

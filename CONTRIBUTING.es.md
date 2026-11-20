@@ -1,11 +1,14 @@
-# Contribuir a OpenInk Linux
+# Contribuir a OpenInk
 
 [Français](CONTRIBUTING.md) · [English](CONTRIBUTING.en.md) · **Español**
 
 ## Alcance
 
-Este repositorio contiene únicamente la aplicación Linux. Conserva las rutas
-de datos y el alias `inkora` para mantener la compatibilidad de migración.
+Este repositorio contiene la aplicación Linux, el porte experimental Windows
+y el kit experimental macOS. Los portes Windows/macOS no se han probado en sus
+sistemas nativos: conserva esta advertencia en guías y distribuciones. Consulta
+[DISCLAIMER.md](DISCLAIMER.md#español). Conserva las rutas de datos y el alias
+`inkora` para mantener la compatibilidad de migración.
 No añadas dependencias del directorio de investigación original, datos reales
 de impresoras, copias personales, ejecutables de recuperación ni nuevo firmware
 experimental.

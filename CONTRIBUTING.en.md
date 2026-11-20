@@ -1,11 +1,14 @@
-# Contributing to OpenInk Linux
+# Contributing to OpenInk
 
 [Français](CONTRIBUTING.md) · **English** · [Español](CONTRIBUTING.es.md)
 
 ## Scope
 
-This repository contains only the Linux application. Preserve the data paths
-and the `inkora` alias for migration compatibility. Do not introduce dependencies
+This repository contains the Linux application, experimental Windows port and
+experimental macOS kit. Windows/macOS have not been tested on their native
+operating systems: preserve this warning in guides and distributions. See
+[DISCLAIMER.md](DISCLAIMER.md#english). Preserve the data paths and the `inkora`
+alias for migration compatibility. Do not introduce dependencies
 on the original research directory, real printer data, personal backups,
 recovery executables or new experimental firmware.
 

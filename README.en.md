@@ -1,6 +1,14 @@
 <p align="center"><img src="commun/inkora/assets/openink-logo.svg" width="96" alt="OpenInk CMYK ink drop"></p>
 
-<h1 align="center">OpenInk · Linux</h1>
+<h1 align="center">OpenInk · Linux, Windows & macOS</h1>
+
+> [!WARNING]
+> **Windows and macOS: experimental ports NOT TESTED on their native operating systems.**
+> Windows checks used Wine on Linux only. The macOS kit has neither been built nor run on a Mac and includes no compiled `.app`.
+> USB, printing, native notifications and firmware flashing remain unvalidated on these platforms.
+> Correct operation is not guaranteed. Read the [full disclaimer](DISCLAIMER.md#english).
+
+[Download the Windows and macOS prereleases](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0-portages-beta1).
 
 <p align="center"><a href="README.md">Français</a> · <strong>English</strong> · <a href="README.es.md">Español</a></p>
 
@@ -50,7 +58,7 @@ There is no need to reflash for each cartridge.
 | OpenFlow | Explicit USB assistant, backup, integrity checks and risk acceptance |
 | Languages | French, English and Spanish, with a saved preference |
 
-This repository contains the **Linux version only**: sources, tests, artwork
+This repository contains the **Linux version, Windows beta and macOS installation kit**: sources, tests, artwork
 and build scripts. Personal printer backups, recovery executables and
 experimental firmware prototypes are excluded. The bundled USB library keeps
 its original provenance and licence.
@@ -295,3 +303,15 @@ OpenInk is an independent project with no Epson affiliation. Names and marks
 belong to their owners. The USB library's MIT licence and provenance are
 preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). That licence does
 not reassign rights to the included manufacturer firmware.
+
+## Windows 10/11 x64 (beta)
+
+A portable Windows beta is available. Extract the full ZIP and run `OpenInk.exe`;
+Python is included. See the [Windows guide (French)](windows/README.md).
+Hardware validation on a real Windows PC remains pending.
+
+## macOS installation kit (beta)
+
+The [macOS guide (French)](macos/README.md) covers Intel and Apple Silicon.
+Python 3.14 is required. The kit includes dependencies and can build a standalone
+`.app` on the Mac; no compiled Mac app is included. Native Mac validation is pending.

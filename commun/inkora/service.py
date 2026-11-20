@@ -1,5 +1,5 @@
 """Private local session-agent control. There is no printer-write IPC command."""
-import fcntl
+from .filelock import fcntl
 import hashlib
 import json
 import os
@@ -11,6 +11,12 @@ import time
 
 
 def runtime_paths(database):
+    if sys.platform == 'darwin':
+        from .macos_support import runtime_paths as mac_paths
+        return mac_paths(database)
+    if os.name == "nt":
+        from .windows_ipc import runtime_paths as windows_paths
+        return windows_paths(database)
     root=Path(os.environ.get("XDG_RUNTIME_DIR", str(Path.home()/".cache")))/"inkora"
     root.mkdir(parents=True,exist_ok=True,mode=0o700)
     if root.stat().st_uid!=os.getuid():
@@ -24,6 +30,9 @@ def request(database, command="ping", timeout=2):
     if command not in {"ping","refresh","stop","show"}:
         raise ValueError("Commande de session inconnue.")
     path,_=runtime_paths(database)
+    if os.name == "nt":
+        from .windows_ipc import request_path
+        return request_path(path, command, timeout)
     with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
         sock.settimeout(timeout)
         sock.connect(str(path))
@@ -39,7 +48,14 @@ def request(database, command="ping", timeout=2):
 
 
 def launch_command(database, *arguments):
-    return [sys.executable,"-m","inkora", "--database",str(database),*arguments]
+    if getattr(sys,"frozen",False):
+        return [sys.executable,"--database",str(database),*arguments]
+    if sys.platform == 'darwin':
+        launcher=Path(__file__).resolve().parents[2]/'macos/openink_macos.py'
+        if launcher.is_file():
+            return [sys.executable,str(launcher),'--database',str(database),*arguments]
+    executable = str(Path(sys.executable).with_name("pythonw.exe")) if os.name == "nt" else sys.executable
+    return [executable,"-m","inkora", "--database",str(database),*arguments]
 
 
 def launch_environment():
@@ -92,6 +108,13 @@ def tray_name(database):
 
 
 def tray_request(database,command='Version'):
+    if sys.platform == 'darwin':
+        from .macos_tray import tray_request as mac_request
+        return mac_request(database,command)
+    if os.name == 'nt':
+        from .windows_ipc import tray_request as windows_request
+        result = windows_request(database, command)
+        return (result['version'],) if command == 'Version' else ()
     import gi
     gi.require_version('Gio','2.0')
     from gi.repository import Gio,GLib

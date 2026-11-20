@@ -1,11 +1,14 @@
-# Contribuer à OpenInk Linux
+# Contribuer à OpenInk
 
 **Français** · [English](CONTRIBUTING.en.md) · [Español](CONTRIBUTING.es.md)
 
 ## Périmètre
 
-Ce dépôt contient seulement l’application Linux. Conserver les chemins de
-données et l’alias `inkora` pour la migration. Ne pas ajouter de dépendance au
+Ce dépôt contient l’application Linux, le portage Windows expérimental et le
+kit macOS expérimental. Les portages Windows/macOS ne sont pas testés sur leurs
+systèmes natifs : conserver cet avertissement dans les guides et distributions.
+Voir [DISCLAIMER.md](DISCLAIMER.md). Conserver les chemins de données et
+l’alias `inkora` pour la migration. Ne pas ajouter de dépendance au
 dossier de recherche d’origine, de données d’imprimante réelles, de sauvegarde
 personnelle, d’exécutable de récupération ou de nouveau firmware expérimental.
 

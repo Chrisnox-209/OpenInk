@@ -1,6 +1,14 @@
 <p align="center"><img src="commun/inkora/assets/openink-logo.svg" width="96" alt="Gota de tinta CMYK de OpenInk"></p>
 
-<h1 align="center">OpenInk · Linux</h1>
+<h1 align="center">OpenInk · Linux, Windows & macOS</h1>
+
+> [!WARNING]
+> **Windows y macOS: portes experimentales NO PROBADOS en sus sistemas nativos.**
+> Windows solo se comprobó con Wine sobre Linux. El kit macOS no se ha compilado ni ejecutado en un Mac y no incluye una `.app` compilada.
+> El USB, la impresión, las notificaciones nativas y el flasheo siguen sin validar en estas plataformas.
+> No se garantiza su funcionamiento. Lee el [aviso completo](DISCLAIMER.md#español).
+
+[Descargar las versiones preliminares Windows y macOS](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0-portages-beta1).
 
 <p align="center"><a href="README.md">Français</a> · <a href="README.en.md">English</a> · <strong>Español</strong></p>
 
@@ -52,7 +60,7 @@ firmware con cada cartucho.
 | OpenFlow | Asistente USB, copia previa, comprobación de integridad y aceptación de riesgos |
 | Idiomas | Francés, inglés y español, con preferencia guardada |
 
-Este repositorio contiene **solo la versión Linux**: fuentes, pruebas,
+Este repositorio contiene **la versión Linux, la beta de Windows y el kit de instalación macOS**: fuentes, pruebas,
 recursos gráficos y scripts de construcción. No incluye copias personales
 de impresoras, ejecutables de recuperación ni prototipos experimentales de
 firmware. La biblioteca USB conserva su procedencia y licencia originales.
@@ -306,3 +314,15 @@ OpenInk es un proyecto independiente sin afiliación con Epson. Los nombres
 y marcas pertenecen a sus titulares. La licencia MIT y procedencia de la
 biblioteca USB se conservan en [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 Esa licencia no reasigna los derechos del firmware del fabricante incluido.
+
+## Windows 10/11 x64 (beta)
+
+Hay una beta portátil para Windows. Extrae el ZIP completo y abre `OpenInk.exe`;
+Python está incluido. Consulta la [guía Windows (francés)](windows/README.md).
+Falta la validación del hardware en un PC Windows real.
+
+## Kit de instalación macOS (beta)
+
+La [guía macOS (francés)](macos/README.md) cubre Intel y Apple Silicon.
+Requiere Python 3.14. El kit incluye dependencias y permite generar una aplicación
+`.app` en el Mac; no incluye una app compilada. Falta la validación nativa en Mac.

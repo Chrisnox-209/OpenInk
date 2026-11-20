@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import sqlite3
 import string
+import sys
 
 LANGUAGES={'auto':'Automatique','fr':'Français','en':'English','es':'Español'}
 _language='fr'
@@ -51,7 +52,7 @@ def saved_language(database=None):
 
 @lru_cache(maxsize=2)
 def catalog(language):
-    return json.loads((Path(__file__).parent/'locales'/f'{language}.json').read_text())
+    return json.loads((Path(__file__).parent/'locales'/f'{language}.json').read_text(encoding='utf-8'))
 
 
 @lru_cache(maxsize=2)
@@ -68,7 +69,12 @@ def patterns(language):
 
 
 def tr(value):
-    return _translate(value,_language,0)
+    translated=_translate(value,_language,0)
+    if os.name == 'nt' and isinstance(translated,str):
+        translated=translated.replace('d’Ubuntu','de Windows').replace('Ubuntu','Windows').replace('CUPS','Windows')
+    if sys.platform == 'darwin' and isinstance(translated,str):
+        translated=translated.replace('d’Ubuntu','de macOS').replace('Ubuntu','macOS')
+    return translated
 
 
 @lru_cache(maxsize=2)

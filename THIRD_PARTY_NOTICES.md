@@ -11,8 +11,9 @@ Sources vendues dans `commun/inkora/_vendor/epson_usb/`.
   [PROVENANCE.json](commun/inkora/_vendor/PROVENANCE.json).
 
 L’ensemble embarqué conserve ses modules de transport d’origine, y compris
-ceux spécifiques à d’autres plateformes. Cela ne constitue pas une version
-Windows ou macOS d’OpenInk ; l’application et ses lanceurs ciblent Linux.
+ceux spécifiques à d’autres plateformes. Le portage Windows utilise le transport USBPRINT existant. Le kit macOS
+utilise le transport libusb existant, avec une bibliothèque native fournie
+par libusb-package. Aucun module tiers USB n’a été modifié par ces portages.
 
 ## Firmware V2 XP-2200
 
@@ -34,7 +35,25 @@ le texte de licence correspondant est conservé dans
 
 Python/Tk, Pillow, PyGObject, GLib, libusb, CUPS, systemd et les outils Ubuntu
 restent fournis par le système, sous leurs licences respectives. ReportLab,
-Poppler et Lato servent uniquement à régénérer les ressources. Les paquets
-Python ou exécutables système ne sont pas vendus dans ce dépôt.
+Poppler et Lato servent uniquement à régénérer les ressources. Le paquet portable Windows embarque Python/Tk, Pillow, pystray, six et pywin32.
+Les textes de licence de ces dépendances sont copiés dans son dossier `licenses/`.
+Le lanceur est produit avec PyInstaller, dont l’exception de licence autorise
+la distribution des applications compilées. Les dépendances de construction
+sont listées dans `windows/requirements.txt`.
 
 Epson est une marque de ses titulaires. OpenInk est un projet indépendant.
+
+## Kit et application macOS
+
+Le kit inclut les wheels officiels Pillow, pystray, PyObjC (Cocoa et Quartz),
+libusb-package, PyInstaller et leurs dépendances. Leurs métadonnées et licences
+sont conservées dans les wheels. La liste de chaque architecture est épinglée
+avec SHA-256. La construction native copie les notices dans les ressources de
+l’application et conserve les sources Python de pystray. La bibliothèque libusb
+reste dynamique ; sa licence et son origine sont conservées via libusb-package.
+
+Sources : [pystray](https://github.com/moses-palmer/pystray),
+[PyObjC](https://github.com/ronaldoussoren/pyobjc),
+[libusb-package](https://github.com/pyocd/libusb-package),
+[libusb](https://github.com/libusb/libusb),
+[PyInstaller](https://github.com/pyinstaller/pyinstaller).

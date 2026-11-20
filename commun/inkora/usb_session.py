@@ -4,7 +4,7 @@ Resynchronize D4 headers after observed zero padding and close the logical
 channel/session before releasing USB. No EEPROM, reset or update commands.
 """
 import struct
-import fcntl
+from .filelock import fcntl
 import time
 from pathlib import Path
 import sys
@@ -115,7 +115,13 @@ class EpsonUsbPrinter(_Printer):
     def open(self):
         if self.session is not None and self.session.connected:
             return self
-        lock_path = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home()/".cache"))) / "inkora/usb.lock"
+        if os.name == 'nt':
+            from .store import default_database
+            lock_path = default_database().parent / 'usb.lock'
+        elif sys.platform == 'darwin':
+            lock_path = Path.home() / 'Library/Caches/inkora/usb.lock'
+        else:
+            lock_path = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home()/".cache"))) / "inkora/usb.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         self._local_lock = lock_path.open("a+b")
         lock_path.chmod(0o600)

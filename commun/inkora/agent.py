@@ -1,6 +1,6 @@
 """Single session monitor: reads status, stores events and delivers notifications."""
 from datetime import datetime, timezone
-import fcntl
+from .filelock import fcntl
 import json
 import logging
 from logging.handlers import RotatingFileHandler
@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import signal
 import socket
+import sys
 import threading
 import time
 
@@ -51,6 +52,9 @@ class Agent:
                     if len(data)>=4096:raise ValueError("Requête trop grande")
                     parsed=json.loads(data)
                     if not isinstance(parsed,dict):raise ValueError('Requête invalide')
+                    if os.name == 'nt':
+                        from .windows_ipc import authenticate
+                        authenticate(parsed, self.ipc_secret)
                     command=parsed.get("command")
                     if command=="refresh":self.wake.set()
                     elif command=="stop":self.stop.set();self.wake.set()
@@ -74,14 +78,19 @@ class Agent:
             log_path.chmod(0o600)
             logger.addHandler(handler);logger.setLevel(logging.INFO)
             self.notifier=self.notifier or DesktopNotifications(self.database)
-            server=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+            if os.name == 'nt':
+                from .windows_ipc import create_server
+                server,self.ipc_secret=create_server(path)
+            else:
+                server=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
             self.server=server
             try:
-                server.bind(str(path));path.chmod(0o600);server.listen(4);server.settimeout(.5)
+                if os.name != 'nt':
+                    server.bind(str(path));path.chmod(0o600);server.listen(4);server.settimeout(.5)
                 thread=threading.Thread(target=self.serve,daemon=True,name='OpenInk-session-control');thread.start()
                 failures=0;cycles=0;next_read=0
                 while not self.stop.is_set():
-                    if not Path(__file__).is_file():break  # Uninstalled package: stop without root intervention.
+                    if not getattr(sys,'frozen',False) and not Path(__file__).is_file():break  # Uninstalled package: stop without root intervention.
                     set_language(store.setting('language','auto'))
                     try:self.notifier.poll()
                     except ConnectionError:

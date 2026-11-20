@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import re
+import sys
 
 APP_NAME='OpenInk'
 FIRMWARE_NAME='OpenFlow'
@@ -28,6 +29,17 @@ def initial_geometry(screen_width,screen_height):
 
 def active_monitor(root):
     """Tk/XWayland reports the combined desktop; choose the pointer's monitor."""
+    if sys.platform == 'darwin':
+        from .macos_support import active_monitor as mac_monitor
+        return mac_monitor(root)
+    if os.name == 'nt':
+        try:
+            import win32api
+            monitor=win32api.GetMonitorInfo(win32api.MonitorFromPoint(win32api.GetCursorPos()))['Work']
+            x,y,right,bottom=monitor
+            return right-x,bottom-y,x,y
+        except Exception:
+            return root.winfo_screenwidth(),root.winfo_screenheight(),0,0
     try:
         result=subprocess.run(['xrandr','--listmonitors'],capture_output=True,text=True,timeout=2)
         monitors=[]
@@ -48,7 +60,7 @@ def migrate_legacy_shortcut(applications=None,installed_entry=Path('/usr/share/a
     root=Path(applications)if applications else Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'applications'
     legacy=root/'inkora.desktop'
     if not legacy.is_file():return False
-    data=legacy.read_text()
+    data=legacy.read_text(encoding='utf-8')
     if 'Lancer-Inkora.sh'not in data or 'Comment=Suivi des cartouches Epson'not in data:return False
     backup=root/'inkora.desktop.before-openink'
     if not backup.exists():shutil.copy2(legacy,backup)

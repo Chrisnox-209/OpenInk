@@ -29,7 +29,7 @@ class FlashJob:
     def __init__(self,identifier,backend_factory=V2Usb,clock=time.time,sleep=time.sleep,
                  stop_monitoring=stop_monitor,restart_monitoring=None,monotonic=time.monotonic):
         self.identifier=identifier;self.folder=job_folder(identifier)
-        self.request=json.loads((self.folder/'request.json').read_text())
+        self.request=json.loads((self.folder/'request.json').read_text(encoding='utf-8'))
         if self.request.get('id')!=identifier or self.request.get('confirmed')is not True or self.request.get('payload_sha256')!=V2_SHA:
             raise ValueError('Demande d’installation invalide.')
         self.request['plan']=validate_plan(self.request['plan'])
@@ -42,7 +42,7 @@ class FlashJob:
             restart_monitoring=ensure_agent
         self.restart_monitoring=restart_monitoring
         previous_path=self.folder/'progress.json'
-        self.state=json.loads(previous_path.read_text())if previous_path.exists()else{
+        self.state=json.loads(previous_path.read_text(encoding='utf-8'))if previous_path.exists()else{
             'id':identifier,'phase':'prepared','detail':'Installation préparée, aucune commande envoyée.',
             'update_mode_attempted':False,'commit_attempted':False,'verified':False,'levels_applied':False}
 
@@ -117,7 +117,7 @@ class FlashJob:
 
     def run(self,verify_only=False):
         # Root is unnecessary and would create an agent with the wrong session.
-        if os.geteuid()==0:raise ValueError('Lancer Inkora dans la session utilisateur, sans sudo.')
+        if os.name != 'nt' and os.geteuid()==0:raise ValueError('Lancer Inkora dans la session utilisateur, sans sudo.')
         if not verify_only and self.state['phase']!='prepared':
             raise ValueError('Une opération existante ne peut pas être reflashée ; créer une nouvelle préparation si nécessaire.')
         if not verify_only and(self.request.get('risk_acknowledged')is not True or self.request.get('usb_confirmed')is not True
@@ -218,5 +218,16 @@ class FlashJob:
 
 
 def run_job(identifier,verify_only=False):
+    if os.name == 'nt':
+        import ctypes
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.SetThreadExecutionState.argtypes=[ctypes.c_uint]
+        kernel.SetThreadExecutionState.restype=ctypes.c_uint
+        if not kernel.SetThreadExecutionState(0x80000001):
+            raise OSError('Impossible d’empêcher la veille ; opération non commencée.')
+        try:
+            job=FlashJob(identifier)
+            return 0 if job.run(verify_only) else 1
+        finally:kernel.SetThreadExecutionState(0x80000000)
     job=FlashJob(identifier)
     return 0 if job.run(verify_only)else 1

@@ -5,7 +5,7 @@ lease with the firmware worker and honour an interrupted operation's journal.
 """
 from contextlib import contextmanager
 from datetime import datetime,timezone
-import fcntl
+from .filelock import fcntl
 import gzip
 import hashlib
 import json
@@ -33,14 +33,15 @@ def utc_now():return datetime.now(timezone.utc).isoformat()
 
 def private_directory(path):
     path=Path(path);path.mkdir(parents=True,exist_ok=True,mode=0o700)
-    if path.is_symlink()or path.stat().st_uid!=os.getuid():
+    if path.is_symlink() or (os.name != 'nt' and path.stat().st_uid!=os.getuid()):
         raise ValueError('Le dossier OpenInk doit appartenir à cet utilisateur.')
     path.chmod(0o700)
     return path
 
 
 def firmware_root():
-    return private_directory(Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'inkora/firmware')
+    from .store import default_database
+    return private_directory(default_database().parent/'firmware')
 
 
 def atomic_json(path,value):
@@ -50,9 +51,10 @@ def atomic_json(path,value):
         with os.fdopen(fd,'w',encoding='utf-8')as stream:
             json.dump(value,stream,ensure_ascii=False,indent=2);stream.write('\n');stream.flush();os.fsync(stream.fileno())
         os.replace(temporary,path)
-        directory=os.open(path.parent,os.O_RDONLY)
-        try:os.fsync(directory)
-        finally:os.close(directory)
+        if os.name != 'nt':
+            directory=os.open(path.parent,os.O_RDONLY)
+            try:os.fsync(directory)
+            finally:os.close(directory)
     finally:temporary.unlink(missing_ok=True)
 
 
@@ -72,7 +74,7 @@ def load_assets():
 def current_operation():
     path=firmware_root()/'current.json'
     if not path.exists():return None
-    result=json.loads(path.read_text())
+    result=json.loads(path.read_text(encoding='utf-8'))
     if not isinstance(result,dict)or'phase'not in result:raise ValueError('Journal firmware illisible ; contrôle manuel requis.')
     return result
 
@@ -162,13 +164,30 @@ def prepare_job(database,snapshot,plan,estimates,confirmed=False,*,risk_acknowle
 
 def read_job(identifier):
     folder=job_folder(identifier)
-    return json.loads((folder/'request.json').read_text()),json.loads((folder/'progress.json').read_text())if(folder/'progress.json').exists()else None
+    return json.loads((folder/'request.json').read_text(encoding='utf-8')),json.loads((folder/'progress.json').read_text(encoding='utf-8'))if(folder/'progress.json').exists()else None
 
 
 def launch_job(identifier,verify_only=False):
-    from .service import launch_environment
+    from .service import launch_environment,launch_command
     import sys
     job_folder(identifier)  # Validate before constructing arguments.
+    if os.name == 'nt':
+        folder=job_folder(identifier);log=folder/'worker.log'
+        request=json.loads((folder/'request.json').read_text(encoding='utf-8'))
+        command=launch_command(request['database'],'--firmware-job',identifier)
+        if verify_only:command.append('--verify-firmware')
+        with log.open('ab') as stream:
+            return subprocess.Popen(command,env=launch_environment(),stdout=stream,stderr=stream,creationflags=subprocess.CREATE_NO_WINDOW)
+    if sys.platform == 'darwin':
+        inhibit=Path('/usr/bin/caffeinate')
+        if not inhibit.is_file():raise ValueError('caffeinate est requis pour empêcher la veille pendant le flash.')
+        folder=job_folder(identifier);log=folder/'worker.log'
+        request=json.loads((folder/'request.json').read_text(encoding='utf-8'))
+        command=[str(inhibit),'-is',*launch_command(request['database'],'--firmware-job',identifier)]
+        if verify_only:command.append('--verify-firmware')
+        with log.open('ab') as stream:
+            log.chmod(0o600)
+            return subprocess.Popen(command,env=launch_environment(),stdout=stream,stderr=stream,start_new_session=True)
     inhibit=shutil.which('systemd-inhibit')
     if not inhibit:raise ValueError('systemd-inhibit est requis pour empêcher la veille pendant l’installation.')
     command=[inhibit,'--what=sleep:idle','--mode=block','--who=OpenInk',
@@ -182,7 +201,7 @@ def launch_job(identifier,verify_only=False):
 
 @lru_cache(maxsize=1)
 def boot_id():
-    try:return Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    try:return Path('/proc/sys/kernel/random/boot_id').read_text(encoding='utf-8').strip()
     except OSError:return ''
 
 

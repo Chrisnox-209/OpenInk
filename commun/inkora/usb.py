@@ -1,12 +1,22 @@
 """Normal-mode, fixed read commands only. Never sends EEPROM/service commands."""
 from dataclasses import replace
 import subprocess
+import os
+import sys
 
 from .printer import parse_status, COMMANDS
 
 
 def read_usb():
+    if sys.platform == 'darwin':
+        from .macos_support import configure_libusb
+        configure_libusb(required=True)
     from .usb_session import EpsonUsbPrinter
+    if os.name == 'nt':
+        from .windows_usb import normal_usb_device
+        from .windows_printing import require_empty_queues
+        path=normal_usb_device();require_empty_queues()
+        return _read_usb_path(EpsonUsbPrinter,path,'usbprint')
     from epson_usb.backends import find_devices
     candidates=[d for d in find_devices(backend="libusb") if d.vendor_id==0x04b8]
     normal={d.path:d for d in candidates if d.product_id==0x11b1}
@@ -21,8 +31,12 @@ def read_usb():
     if jobs.returncode or jobs.stdout.strip():
         raise ValueError("Une file est active ou CUPS ne répond pas. Lecture USB différée sans arrêter de travail.")
     path=next(iter(normal))
-    with EpsonUsbPrinter(read_key=None,write_key=None,dry_run=True,backend="libusb",
-                         device=path,interface=1) as printer:
+    return _read_usb_path(EpsonUsbPrinter,path,'libusb')
+
+
+def _read_usb_path(printer_class,path,backend):
+    with printer_class(read_key=None,write_key=None,dry_run=True,backend=backend,
+                       device=path,interface=1) as printer:
         def read(name):
             command,param=COMMANDS[name]
             value=printer.command(command,param)

@@ -1,6 +1,7 @@
-"""OpenInk Linux entry point. Normal launches always use real monitoring."""
+"""OpenInk desktop entry point. Normal launches always use real monitoring."""
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -44,7 +45,12 @@ def main():
         from .store import default_database
         stop_desktop(args.database or default_database());return
     if args.tray:
-        from .tray import run_tray
+        if sys.platform == 'darwin':
+            from .macos_tray import run_tray
+        elif os.name == 'nt':
+            from .windows_desktop import run_tray
+        else:
+            from .tray import run_tray
         from .store import default_database
         run_tray(args.database or default_database());return
     if args.agent:
@@ -55,6 +61,8 @@ def main():
         from .usb import read_connected
         print(json.dumps(read_connected(args.host or '192.168.1.55',args.transport or 'network').to_dict(),indent=2,ensure_ascii=False));return
     store=Store(args.database)
+    if (os.name == 'nt' or sys.platform == 'darwin') and store.setting('autostart') is None:
+        store.set_setting('autostart',False)
     if args.lang:store.set_setting('language',args.lang)
     if args.host:store.set_setting('host',args.host)
     if args.transport:store.set_setting('transport',args.transport)

@@ -2,7 +2,15 @@
   <img src="commun/inkora/assets/openink-logo.svg" width="96" alt="Logo OpenInk : goutte cyan, magenta, jaune et noire">
 </p>
 
-<h1 align="center">OpenInk · Linux</h1>
+<h1 align="center">OpenInk · Linux, Windows & macOS</h1>
+
+> [!WARNING]
+> **Windows et macOS : portages expérimentaux NON TESTÉS sur leurs systèmes natifs.**
+> Windows a été vérifié uniquement sous Wine/Linux. Le kit macOS n’a été ni compilé ni exécuté sur un Mac et ne contient pas de `.app` compilé.
+> L’USB, l’impression, les notifications natives et le flash restent non validés sur ces plateformes.
+> Leur bon fonctionnement n’est pas garanti. Lire [l’avertissement complet](DISCLAIMER.md).
+
+[Télécharger les préversions Windows et macOS](https://github.com/Chrisnox-209/OpenInk/releases/tag/v1.7.0-portages-beta1).
 
 <p align="center"><strong>Français</strong> · <a href="README.en.md">English</a> · <a href="README.es.md">Español</a></p>
 
@@ -36,10 +44,11 @@ garantir l’absence de désamorçage. Un nouveau flash à chaque cartouche est 
 
 *Captures de l’interface française avec des valeurs d’exemple, sans données personnelles.*
 
-Ce dépôt contient la version **Linux uniquement** : sources, tests, ressources
-graphiques et scripts de construction. Il ne contient ni données utilisateur,
-ni sauvegarde privée d’imprimante, ni outil Windows/macOS, ni firmware de
-récupération ou prototype expérimental. La bibliothèque USB tierce est
+Ce dépôt contient la version **Linux**, le portage **Windows 10/11 x64 en bêta**
+et le **kit d’installation macOS en bêta** :
+sources, tests, ressources graphiques et scripts de construction. Il ne contient
+ni données utilisateur, ni sauvegarde privée d’imprimante,
+ni firmware de récupération ou prototype expérimental. La bibliothèque USB tierce est
 conservée avec ses fichiers et sa licence d’origine.
 
 > **Cible limitée à l’Epson XP-2200 / IU05P2.** Le flash peut
@@ -78,7 +87,23 @@ sudo apt install python3 python3-tk python3-pil python3-gi gir1.2-glib-2.0 \
   libusb-1.0-0 cups-client systemd xdg-utils x11-xserver-utils
 ```
 
-## Installation
+## Version Windows
+
+Le portage Windows 10/11 64 bits est disponible en **bêta 1**. Extraire entièrement
+l’archive portable, puis double-cliquer sur `OpenInk.exe`. Python est inclus.
+Le suivi, l’icône de notification, le démarrage optionnel, les thèmes, les langues
+et la page de test utilisent des composants Windows. Voir le
+[guide Windows](windows/README.md) pour la construction et les limites de validation.
+
+## Kit macOS
+
+Le [kit macOS](macos/README.md) vise Intel et Apple Silicon avec macOS 11 ou
+plus récent. Il inclut les dépendances pour Python 3.14 : `Lancer-OpenInk.command`
+ouvre les sources et `Installer-OpenInk.command` construit une application autonome
+sur le Mac. **La compilation native et la validation sur Mac restent à faire** ;
+ce kit ne contient pas de `.app` déjà compilé.
+
+## Installation Ubuntu
 
 ### Télécharger le paquet prêt à installer
 
@@ -295,6 +320,8 @@ commun/inkora/             Application, agent, base, UI et accès matériels
   locales/                Catalogues anglais et espagnol
   firmware_assets/        OpenFlow : image V2 inchangée et manifeste épinglé
   _vendor/                Bibliothèque USB, provenance et licence MIT
+macos/                    Lanceurs, kit Intel/Apple Silicon, constructeur .app et tests
+windows/                  Lanceur, constructeur portable et tests Windows
 linux/                    Lanceurs et scripts de construction Ubuntu
   tests/                  Tests et contrôles graphiques isolés
 docs/                     Installation technique, V2 et bilan de validation
